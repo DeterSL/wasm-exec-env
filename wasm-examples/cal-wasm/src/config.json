@@ -1,0 +1,6 @@
+{
+  "module_name": "calculator_module",
+  "module_path": "(does not matter)",
+  "module_entry_point": "add",
+  "args": [3, 4]
+}
