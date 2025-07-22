@@ -2,7 +2,7 @@
 # will have compiled files and executables
 /target/
 
-wasm-examples/hello-wasm/target/
+wasm-examples/*/target/
 
 # Remove Cargo.lock from gitignore if creating an executable, leave it for libraries
 Cargo.lock
