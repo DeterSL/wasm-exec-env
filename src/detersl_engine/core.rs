@@ -1,5 +1,3 @@
-pub mod core {
-
 use anyhow::{Result, bail};
 use std::sync::Arc;
 use wasmtime::*;
@@ -51,6 +49,4 @@ impl WasmModule {
             args 
         }
     }
-}
-
 }

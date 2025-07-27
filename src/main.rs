@@ -1,8 +1,8 @@
 mod detersl_engine;
 
 use std::{env, process};
-use detersl_engine::core::core::*;
-use detersl_engine::parser::parser::*;
+use detersl_engine::core::*;
+use detersl_engine::parser::*;
 
 fn main() {
     let args: Vec<String> = env::args().collect();

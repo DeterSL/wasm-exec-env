@@ -1,9 +1,9 @@
-pub mod parser {
-    use crate::WasmModule;
     use wasmtime::Val;
     use serde::Deserialize;
     use std::fs::File;
     use std::io::Read;
+
+    use super::core::WasmModule;
 
     #[derive(Deserialize)]
     struct WasmModuleJson {
@@ -61,4 +61,3 @@ pub mod parser {
             ))
         }
     }
-}
