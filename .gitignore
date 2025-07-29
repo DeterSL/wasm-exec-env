@@ -4,6 +4,8 @@
 
 wasm-examples/*/target/
 
+wasm-examples/*/__pycache__/
+
 # Remove Cargo.lock from gitignore if creating an executable, leave it for libraries
 Cargo.lock
 
