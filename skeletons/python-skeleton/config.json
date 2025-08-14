@@ -1,0 +1,7 @@
+{
+  "func_name": "py_skeleton",
+  "func_binary_path": "/home/sod/research/serverless/source-code/deterSL_runtime/skeletons/python-skeleton/py-skeleton.wasm",
+  "func_input_event": {
+      "data": "{ \"name\": \"idk\", \"age\": 100, \"work\": \"N/A\" }"
+  }
+}

@@ -1,97 +1,127 @@
 mod core;
 mod config;
 
-use std::{env, process, time::Instant};
-use core::*;
-use config::parser::*;
-use wasmtime_wasi::{
-    p2::{WasiCtxBuilder, WasiCtx, IoView, WasiView},
-    ResourceTable,
-};
+use core::{*, worker::FuncJob};
+use std::{net::SocketAddr, convert::Infallible};
 
-wasmtime::component::bindgen!({
-    path: "/home/sod/research/serverless/source-code/deterSL_runtime/wasm-examples/json-processor/json_processor.wit",
-    world: "json-processor-world",
-});
+use bytes::Bytes;
+use hyper::server::conn::http1;
+use hyper::{body::Incoming, Method, Request, Response, StatusCode};
+use hyper::service::service_fn;
+use hyper_util::{rt::TokioIo};
+use tokio::sync::{mpsc, oneshot};
+use http_body_util::BodyExt;
 
-struct MyState {
-    ctx: WasiCtx,
-    table: ResourceTable,
-}
+use wasmtime::{Config, CacheConfig, Cache};
 
-impl IoView for MyState {
-    fn table(&mut self) -> &mut ResourceTable { &mut self.table }
-}
-impl WasiView for MyState {
-    fn ctx(&mut self) -> &mut WasiCtx { &mut self.ctx }
-}
+use crate::core::worker::Worker;
 
-impl MyState {
-    fn new() -> MyState {
-        let mut wasi = WasiCtxBuilder::new();
+type RespBody = http_body_util::combinators::BoxBody<Bytes, Infallible>;
 
-        MyState {
-            ctx: wasi.build(),
-            table: ResourceTable::new(),
+async fn handle_request(
+    req: Request<Incoming>,
+    tx: mpsc::Sender<FuncJob>,
+) -> Result<Response<RespBody>, Infallible> {
+    match (req.method(), req.uri().path()) {
+        (&Method::POST, "/run") => {
+            let collected = match req.into_body().collect().await {
+                Ok(c) => c,
+                Err(e) => return Ok(resp(StatusCode::BAD_REQUEST, format!("read body error: {e}"))),
+            };
+            let body_bytes = collected.to_bytes();
+
+            let cfg: config::func_config::FuncBinaryConfig = match serde_json::from_slice(&body_bytes) {
+                Ok(c) => c,
+                Err(e) => {
+                    return Ok(resp(
+                        StatusCode::BAD_REQUEST,
+                        format!("invalid JSON for FuncBinaryConfig: {e}"),
+                    ))
+                }
+            };
+
+            let (reply_tx, reply_rx) = oneshot::channel();
+
+            if let Err(_e) = tx.send(FuncJob { config: cfg, reply: reply_tx }).await {
+                return Ok(resp(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "worker unavailable".to_string(),
+                ));
+            }
+
+            match reply_rx.await {
+                Ok(Ok(out)) => {
+                    match serde_json::to_vec(&out) {
+                        Ok(json) => Ok(json_resp(StatusCode::OK, json)),
+                        Err(e) => Ok(resp(
+                            StatusCode::INTERNAL_SERVER_ERROR,
+                            format!("failed to serialize output: {e}"),
+                        )),
+                    }
+                }
+                Ok(Err(err)) => Ok(resp(StatusCode::INTERNAL_SERVER_ERROR, err.to_string())),
+                Err(_canceled) => Ok(resp(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "worker dropped".to_string(),
+                )),
+            }
         }
+        _ => Ok(resp(StatusCode::NOT_FOUND, "not found".to_string())),
     }
 }
 
-fn main() -> anyhow::Result<()> {
-    let overall_timer = Instant::now();
+#[tokio::main(flavor = "multi_thread")]
+async fn main() -> anyhow::Result<()> {
+    let (tx, rx) = mpsc::channel::<FuncJob>(1024);
 
-    let args: Vec<String> = env::args().collect();
-    if args.len() != 2 {
-        eprintln!("Usage: {} <config_json>", args[0]);
-        process::exit(1);
+    // 2) Spawn the synchronous worker on its own OS thread and run forever
+    std::thread::spawn(move || {
+        let mut cache_config = Config::new();
+        let cache = Cache::new(CacheConfig::new()).unwrap();
+        cache_config.cache(Some(cache));
+        let worker = Worker::new(cache_config);
+        worker.run_forever(rx);
+    });
+
+    // 3) Minimal Hyper 1.x server: accept loop + per-conn http1 server
+    let addr: SocketAddr = "0.0.0.0:3000".parse().unwrap();
+    let listener = tokio::net::TcpListener::bind(addr).await?;
+    println!("Listening on http://{addr}");
+
+    loop {
+        let (stream, _peer) = listener.accept().await?;
+        let io = TokioIo::new(stream);
+        let tx_conn = tx.clone();
+
+        tokio::spawn(async move {
+            let svc = service_fn(move |req| {
+                let tx_req = tx_conn.clone();
+                handle_request(req, tx_req)
+            });
+
+            if let Err(err) = http1::Builder::new().serve_connection(io, svc).await {
+                eprintln!("connection error: {err}");
+            }
+        });
     }
-    let config_path = &args[1];
+}
 
-    // 1. Parse the JSON config to create a WasmModule
-    let start_parse = Instant::now();
-    let parser = WasmBinaryJsonParser::new(config_path.to_string());
-    let mut module = match parser.parse() {
-        Ok(m) => m,
-        Err(e) => {
-            eprintln!("Error parsing config '{}': {}", config_path, e);
-            process::exit(1);
-        }
-    };
-    println!("Config parsed in: {:.2?}", start_parse.elapsed());
+fn resp(status: StatusCode, body: String) -> Response<RespBody> {
+    use http_body_util::{BodyExt, Full};
+    let full = Full::new(Bytes::from(body));
+    Response::builder()
+        .status(status)
+        .header("content-type", "text/plain; charset=utf-8")
+        .body(full.boxed())
+        .unwrap()
+}
 
-    // 2. Initialize engine and linker
-    let start_engine = Instant::now();
-    let engine = engine::DeterSLEngine::new();
-    let mut detersl_linker_builder = builder::DeterSLComponentLinkerBuilder::new(&engine); 
-    detersl_linker_builder.add_wasi();
-    println!("Engine and linker initialized in: {:.2?}", start_engine.elapsed());
-
-    // 3. Create instance builder and store with state
-    let start_store = Instant::now();
-    let mut detersl_instance_builder = builder::DeterSLComponentInstanceBuilder::new(&engine, detersl_linker_builder);
-    detersl_instance_builder.create_store_with(MyState::new());
-    println!("Store created in: {:.2?}", start_store.elapsed());
-
-    // 4. Load component from config
-    let start_load = Instant::now();
-    detersl_instance_builder.load_component_from_config(&module);
-    println!("Component loaded from config in: {:.2?}", start_load.elapsed());
-
-    // 5. Instantiate the component using bindgen
-    let start_instantiate = Instant::now();
-    let bindgen_world = detersl_instance_builder.instantiate_instance(|store, component, linker| {
-        let world = JsonProcessorWorld::instantiate(store, component, &linker)?;
-        Ok(world)
-    })?;
-    println!("Component instantiated in: {:.2?}", start_instantiate.elapsed());
-
-    // 6. Call process function and measure the duration
-    let start_call = Instant::now();
-    let input = r#"{"number":42}"#;
-    let output = bindgen_world.http_reader_json_jsonprocess().call_process(detersl_instance_builder.take_store(), input)?;
-    println!("Processing call executed in: {:.2?}", start_call.elapsed());
-
-    println!("Processed JSON: {}", output);
-    println!("Total execution time: {:.2?}", overall_timer.elapsed());
-    Ok(())
+fn json_resp(status: StatusCode, body: Vec<u8>) -> Response<RespBody> {
+    use http_body_util::{BodyExt, Full};
+    let full = Full::new(Bytes::from(body));
+    Response::builder()
+        .status(status)
+        .header("content-type", "application/json")
+        .body(full.boxed())
+        .unwrap()
 }

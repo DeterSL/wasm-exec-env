@@ -1,0 +1,8 @@
+{
+  "func_name": "simple_http",
+  "func_binary_path": "/home/sod/research/serverless/source-code/deterSL_runtime/wasm-examples/simple-http/simple-http.wasm",
+  "func_input_event": {
+      "data": "{ \"name\": \"idk\", \"age\": 100, \"work\": \"N/A\", \"n\": 5 }"
+  },
+  "func_execution_policy": {}
+}

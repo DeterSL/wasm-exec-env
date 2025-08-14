@@ -1,0 +1,9 @@
+package http-reader:json; 
+
+interface jsonprocess {
+    process: func(input: string) -> string;
+}
+
+world json-processor-world {
+    export jsonprocess;
+}
