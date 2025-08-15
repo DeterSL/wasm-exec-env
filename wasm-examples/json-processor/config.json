@@ -1,5 +1,0 @@
-{
-  "module_name": "json-process",
-  "module_path": "/home/sod/research/serverless/source-code/deterSL_runtime/wasm-examples/json-processor/json_processor_component.wasm",
-  "module_entry_point": "process"
-}

@@ -1,6 +1,0 @@
-{
-  "module_name": "hello_module",
-  "module_path": "hello_wasm.wasm",
-  "module_entry_point": "hello",
-  "args": []
-}
