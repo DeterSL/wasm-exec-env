@@ -7,19 +7,22 @@ pub struct FuncInputEvent {
 #[derive(serde::Deserialize)]
 pub struct FuncExecutionPolicy {
     #[serde(default)]
-    allow_clocks: bool,
+    pub allow_clocks: bool,
 
     #[serde(default)]
-    allow_filesystem: bool,
+    pub allow_filesystem: bool,
 
     #[serde(default)]
-    allow_random: bool,
+    pub allow_random: bool,
 
     #[serde(default)]
-    allow_io: bool,
+    pub allow_cli: bool,
 
     #[serde(default)]
-    allow_socket: bool
+    pub allow_io: bool,
+
+    #[serde(default)]
+    pub allow_socket: bool
 }
 
 #[derive(serde::Deserialize)]

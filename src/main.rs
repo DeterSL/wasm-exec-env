@@ -79,7 +79,7 @@ async fn main() -> anyhow::Result<()> {
         let mut cache_config = Config::new();
         let cache = Cache::new(CacheConfig::new()).unwrap();
         cache_config.cache(Some(cache));
-        let worker = Worker::new(cache_config);
+        let mut worker = Worker::new(cache_config);
         worker.run_forever(rx);
     });
 
