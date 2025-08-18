@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Instant};
 
 use tokio::sync::{mpsc, oneshot};
 
@@ -47,11 +47,26 @@ impl Worker {
 
     pub fn run_func(&mut self, func_config: FuncBinaryConfig) -> Result<types::Output, WorkerError> {
         let mut store = Store::new(&self.engine, ExecutionState::new());
+
+        let mut start = Instant::now();
         let component = Component::from_file(&self.engine, func_config.func_binary_path)?;
+        let mut end = Instant::now();
+        log::info!("component built in {} microseconds", (end-start).as_micros());
+    
         let linker_base_on_policy = self.generate_or_get_linker_from(func_config.func_execution_policy);
+
+        start = Instant::now();
         let world = bindings::DeterslApi::instantiate(&mut store, &component, &linker_base_on_policy)?;
+        end = Instant::now();
+        log::info!("instantiate done in {} microseconds", (end-start).as_micros());
+
         let event: Event = func_config.func_input_event.into();
+
+        start = Instant::now();
         let output = world.detersl_api_func_handler().call_handle(store, &event.into_binding())?;
+        end = Instant::now();
+        log::info!("call done in {} microseconds", (end-start).as_micros());
+
         Ok(Output::from(output))
     }
 

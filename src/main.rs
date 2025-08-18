@@ -12,7 +12,7 @@ use hyper_util::{rt::TokioIo};
 use tokio::sync::{mpsc, oneshot};
 use http_body_util::BodyExt;
 
-use wasmtime::{Config, CacheConfig, Cache};
+use wasmtime::{Config, CacheConfig, Cache, Strategy, InstanceAllocationStrategy, PoolingAllocationConfig};
 
 use crate::core::worker::Worker;
 
@@ -72,6 +72,8 @@ async fn handle_request(
 
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> anyhow::Result<()> {
+    env_logger::init();
+    
     let (tx, rx) = mpsc::channel::<FuncJob>(1024);
 
     // 2) Spawn the synchronous worker on its own OS thread and run forever
