@@ -1,10 +1,11 @@
 use wasmtime_wasi::{p2::{WasiCtx, IoView, WasiView, WasiCtxBuilder}, ResourceTable};
 
-use crate::core::detersl_wasi;
+use crate::core::detersl_wasi::{self, kv::DummyKV};
 
 pub struct ExecutionState {
     ctx: WasiCtx,
     table: ResourceTable,
+    pub kv: DummyKV
 }
 
 impl IoView for ExecutionState {
@@ -29,6 +30,7 @@ impl ExecutionState {
         ExecutionState {
             ctx: wasi.build(),
             table: ResourceTable::new(),
+            kv: DummyKV::new()
         }
     }
 }

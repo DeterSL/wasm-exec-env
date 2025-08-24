@@ -2,10 +2,10 @@ use std::{sync::Arc, time::Instant};
 
 use tokio::sync::{mpsc, oneshot};
 
-use wasmtime::{Engine, Config, component::{Linker, Component}, Store};
-use wasmtime_wasi::p2::add_to_linker_sync;
+use wasmtime::{Engine, Config, component::{Linker, Component, HasData}, Store};
+use wasmtime_wasi::p2::{add_to_linker_sync, WasiImpl};
 
-use crate::{core::{execution::ExecutionState, types::{self, Output, Event}, bindings, utils::Cache}, config::func_config::{FuncBinaryConfig, FuncExecutionPolicy}};
+use crate::{core::{execution::ExecutionState, types::{self, Output, Event}, bindings, utils::Cache, detersl_wasi::kv::DummyKV}, config::func_config::{FuncBinaryConfig, FuncExecutionPolicy}};
 
 use super::{linker_builder::{encode_execution_policy, self, LinkerBuilder}, linker_opts::get_linker_opts_from_execution_policy};
 
@@ -19,6 +19,12 @@ pub struct FuncJob {
 pub struct Worker {
     engine: Engine,
     linker_cache: Cache<Linker<ExecutionState>>
+}
+
+struct HasKV();
+
+impl HasData for HasKV {
+    type Data<'a> = &'a mut DummyKV;
 }
 
 impl Worker {
@@ -37,7 +43,10 @@ impl Worker {
                let mut linker_builder = LinkerBuilder::new(Linker::<ExecutionState>::new(&self.engine));
                let mut linker_opts = get_linker_opts_from_execution_policy(&execution_policy);
                linker_builder.add_opts(&mut linker_opts);
-               let linker = linker_builder.build();
+               let mut linker = linker_builder.build();
+
+               let f: fn(&mut ExecutionState) -> &mut DummyKV = |t| &mut t.kv;
+               bindings::detersl::api::kv::add_to_linker::<ExecutionState, HasKV>(&mut linker, f).unwrap();
                self.linker_cache.insert(encoded_policy.clone(), linker);
                let retrived_linker = self.linker_cache.get(&encoded_policy).unwrap();
                retrived_linker

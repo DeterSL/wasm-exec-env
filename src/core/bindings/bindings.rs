@@ -5,5 +5,5 @@ mod genrated {
     });
 }
 
-pub use self::genrated::exports::*;
+pub use self::genrated::*;
 pub use self::genrated::DeterslApi;
