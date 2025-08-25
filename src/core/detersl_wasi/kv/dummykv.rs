@@ -6,6 +6,8 @@ pub struct DummyKV {
     inner: Mutex<std::collections::HashMap<String, Vec<u8>>>,
 }
 
+unsafe impl Send for DummyKV {}
+
 impl DummyKV {
     pub fn new() -> Self {
         Self { inner: Mutex::new(Default::default()) }

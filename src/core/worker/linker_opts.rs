@@ -1,7 +1,9 @@
-use wasmtime::component::Linker;
+use std::{marker::PhantomData, ops::DerefMut, cell::RefMut};
+
+use wasmtime::component::{Linker, HasData};
 use wasmtime_wasi::p2::{add_clock_to_linker, WasiView, add_random_to_linker, add_cli_to_linker, add_io_to_linker, add_filesystem_to_linker, add_sockets_to_linker};
 
-use crate::config::func_config::FuncExecutionPolicy;
+use crate::{config::func_config::FuncExecutionPolicy, core::{bindings, execution::ExecutionState, detersl_wasi::kv::{KVType, KVRcMut, KvView, KVRefMut}}};
 
 pub trait LinkerOption<T>
 where T: WasiView {
@@ -91,9 +93,34 @@ impl AddSocketsToLinker {
 }
 
 impl<T> LinkerOption<T> for AddSocketsToLinker 
-where T: WasiView  + 'static{
+where T: WasiView  + 'static {
     fn apply_to_linker(&mut self, linker: &mut Linker<T>) -> anyhow::Result<()> {
         add_sockets_to_linker(linker);
+        Ok(())
+    }
+}
+
+pub struct AddKVToLinker {
+    kv: KVRcMut 
+}
+
+impl AddKVToLinker {
+    fn new(kv: KVRcMut) -> Box<Self> {
+        Box::new(Self { kv })
+    } 
+}
+
+struct HasKV();
+
+impl HasData for HasKV {
+    type Data<'a> = KVRefMut<'a>;
+}
+
+impl<T> LinkerOption<T> for AddKVToLinker
+where T: WasiView  + KvView  + 'static {
+    fn apply_to_linker(&mut self, linker: &mut Linker<T>) -> anyhow::Result<()> {
+        let f: fn(&mut T) -> KVRefMut = |t| t.kv().borrow_mut();
+        bindings::detersl::api::kv::add_to_linker::<T, HasKV>(linker, f).unwrap();
         Ok(())
     }
 }
@@ -128,5 +155,3 @@ where T: WasiView + 'static {
 
     opts
 }
-
-

@@ -1,12 +1,17 @@
+use std::rc::Rc;
+
 use wasmtime_wasi::{p2::{WasiCtx, IoView, WasiView, WasiCtxBuilder}, ResourceTable};
 
-use crate::core::detersl_wasi::{self, kv::DummyKV};
+use crate::core::{detersl_wasi::{self, kv::{KVType, KVRcMut, KvView, KVRefCellMut}}};
+
 
 pub struct ExecutionState {
     ctx: WasiCtx,
     table: ResourceTable,
-    pub kv: DummyKV
+    kv: KVRcMut
 }
+
+unsafe impl Send for ExecutionState {}
 
 impl IoView for ExecutionState {
     fn table(&mut self) -> &mut ResourceTable { &mut self.table }
@@ -16,8 +21,14 @@ impl WasiView for ExecutionState {
     fn ctx(&mut self) -> &mut WasiCtx { &mut self.ctx }
 }
 
+impl KvView for ExecutionState {
+    fn kv(&mut self) -> &KVRefCellMut {
+        &*self.kv
+    }
+}
+
 impl ExecutionState {
-    pub fn new() -> ExecutionState {
+    pub fn new(kv: KVRcMut) -> ExecutionState {
         let mut wasi = WasiCtxBuilder::new();
         
         wasi.monotonic_clock(detersl_wasi::clock::DeterSLMonotonicWallClock::new());
@@ -30,7 +41,7 @@ impl ExecutionState {
         ExecutionState {
             ctx: wasi.build(),
             table: ResourceTable::new(),
-            kv: DummyKV::new()
+            kv
         }
     }
 }
