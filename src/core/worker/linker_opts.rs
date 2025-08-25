@@ -1,9 +1,10 @@
-use std::{marker::PhantomData, ops::DerefMut, cell::RefMut};
+
+use std::vec;
 
 use wasmtime::component::{Linker, HasData};
 use wasmtime_wasi::p2::{add_clock_to_linker, WasiView, add_random_to_linker, add_cli_to_linker, add_io_to_linker, add_filesystem_to_linker, add_sockets_to_linker};
 
-use crate::{config::func_config::FuncExecutionPolicy, core::{bindings, execution::ExecutionState, detersl_wasi::kv::{KVType, KVRcMut, KvView, KVRefMut}}};
+use crate::{config::func_config::FuncExecutionPolicy, core::{bindings, detersl_wasi::kv::{KVRcMut, KvView, KVRefMut}}};
 
 pub trait LinkerOption<T>
 where T: WasiView {
@@ -155,3 +156,11 @@ where T: WasiView + 'static {
 
     opts
 }
+
+pub fn get_kv_as_opt<T>(kv: KVRcMut) -> Vec<Box<dyn LinkerOption<T>>>
+where T: KvView + WasiView + 'static{
+    let mut opts = Vec::<Box<dyn LinkerOption<T>>>::new();
+    opts.push(AddKVToLinker::new(kv));
+    opts
+}
+

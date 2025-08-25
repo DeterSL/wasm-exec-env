@@ -1,8 +1,7 @@
-use std::rc::Rc;
 
 use wasmtime_wasi::{p2::{WasiCtx, IoView, WasiView, WasiCtxBuilder}, ResourceTable};
 
-use crate::core::{detersl_wasi::{self, kv::{KVType, KVRcMut, KvView, KVRefCellMut}}};
+use crate::core::detersl_wasi::{self, kv::{KVRcMut, KvView, KVRefCellMut}};
 
 
 pub struct ExecutionState {

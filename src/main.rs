@@ -12,7 +12,7 @@ use hyper_util::{rt::TokioIo};
 use tokio::sync::{mpsc, oneshot};
 use http_body_util::BodyExt;
 
-use wasmtime::{Config, CacheConfig, Cache, Strategy, InstanceAllocationStrategy, PoolingAllocationConfig};
+use wasmtime::{Config, CacheConfig, Cache};
 
 use crate::core::worker::Worker;
 
