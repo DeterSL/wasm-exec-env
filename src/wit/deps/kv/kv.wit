@@ -1,4 +1,4 @@
-package detersl:api@0.1.0; 
+package detersl:kv-api@0.2.0; 
 
 interface kv {
     get: func(key: string) -> option<list<u8>>;

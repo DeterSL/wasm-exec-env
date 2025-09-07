@@ -121,7 +121,7 @@ impl<T> LinkerOption<T> for AddKVToLinker
 where T: WasiView  + KvView  + 'static {
     fn apply_to_linker(&mut self, linker: &mut Linker<T>) -> anyhow::Result<()> {
         let f: fn(&mut T) -> KVRefMut = |t| t.kv().borrow_mut();
-        bindings::detersl::api::kv::add_to_linker::<T, HasKV>(linker, f).unwrap();
+        bindings::detersl::kv_api::kv::add_to_linker::<T, HasKV>(linker, f).unwrap();
         Ok(())
     }
 }

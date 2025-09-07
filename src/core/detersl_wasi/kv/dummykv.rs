@@ -14,7 +14,7 @@ impl DummyKV {
     }
 }
 
-impl bindings::detersl::api::kv::Host for DummyKV {
+impl bindings::detersl::kv_api::kv::Host for DummyKV {
     fn get(&mut self, key: String) -> Option<Vec<u8>> {
         self.inner.lock().unwrap().get(&key).cloned()
     }
