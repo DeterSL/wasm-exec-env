@@ -20,6 +20,8 @@ where
         let req = self.table().delete(request_id)?;
         let mut builder = hyper::Request::builder();
 
+        println!("heloooooo");
+
         builder = builder.method(match req.method {
             Method::Get => hyper::Method::GET,
             Method::Head => hyper::Method::HEAD,

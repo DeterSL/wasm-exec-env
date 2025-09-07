@@ -26,6 +26,9 @@ pub trait DeterSLHttpView: IoView {
         request: hyper::Request<HyperOutgoingBody>
     ) -> HttpResult<HostFutureIncomingResponse> {
         let income = HostFutureIncomingResponse::Consumed; 
+        // TODO
+        //
+        println!("heloooooo");
         Ok(income)
         //Ok(default_send_request(request))
     }

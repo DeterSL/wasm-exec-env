@@ -3,7 +3,7 @@
 use wasmtime::component::{Linker, HasData};
 use wasmtime_wasi::p2::{add_clock_to_linker, WasiView, add_random_to_linker, add_cli_to_linker, add_io_to_linker, add_filesystem_to_linker, add_sockets_to_linker};
 
-use crate::{config::func_config::FuncExecutionPolicy, core::{bindings, detersl_wasi::kv::{KVRcMut, KvView, KVRefMut}}};
+use crate::{config::func_config::FuncExecutionPolicy, core::{bindings, detersl_wasi::{kv::{KVRcMut, KvView, KVRefMut}, http}}};
 
 pub trait LinkerOption<T>
 where T: WasiView {
@@ -125,6 +125,23 @@ where T: WasiView  + KvView  + 'static {
     }
 }
 
+pub struct AddHTTPToLinker {
+}
+
+impl AddHTTPToLinker {
+   fn new() -> Box<Self> {
+       Box::new(AddHTTPToLinker {  })
+   }
+}
+
+impl<T> LinkerOption<T> for AddHTTPToLinker
+where T: http::DeterSLHttpView +  WasiView  + KvView  + 'static {
+    fn apply_to_linker(&mut self, linker: &mut Linker<T>) -> anyhow::Result<()> {
+        http::add_only_http_to_linker_async(linker)
+    }
+}
+
+
 pub fn get_linker_opts_from_execution_policy<T>(execution_policy: &FuncExecutionPolicy) -> Vec<Box<dyn LinkerOption<T>>>
 where T: WasiView + 'static {
     let mut opts = Vec::<Box<dyn LinkerOption<T>>>::new();
@@ -160,6 +177,13 @@ pub fn get_kv_as_opt<T>(kv: KVRcMut) -> Vec<Box<dyn LinkerOption<T>>>
 where T: KvView + WasiView + 'static{
     let mut opts = Vec::<Box<dyn LinkerOption<T>>>::new();
     opts.push(AddKVToLinker::new(kv));
+    opts
+}
+
+pub fn get_http_as_opt<T>() -> Vec<Box<dyn LinkerOption<T>>>
+where T: http::DeterSLHttpView + KvView + WasiView + 'static {
+    let mut opts = Vec::<Box<dyn LinkerOption<T>>>::new();
+    opts.push(AddHTTPToLinker::new());
     opts
 }
 

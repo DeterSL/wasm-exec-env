@@ -1,13 +1,14 @@
 
 use wasmtime_wasi::{p2::{WasiCtx, IoView, WasiView, WasiCtxBuilder}, ResourceTable};
 
-use crate::core::detersl_wasi::{self, kv::{KVRcMut, KvView, KVRefCellMut}};
+use crate::core::detersl_wasi::{self, kv::{KVRcMut, KvView, KVRefCellMut}, http::{DeterSLHttpView, DeterSLHttpCtx}};
 
 
 pub struct ExecutionState {
     ctx: WasiCtx,
     table: ResourceTable,
-    kv: KVRcMut
+    kv: KVRcMut,
+    http_ctx: DeterSLHttpCtx
 }
 
 unsafe impl Send for ExecutionState {}
@@ -26,6 +27,12 @@ impl KvView for ExecutionState {
     }
 }
 
+impl DeterSLHttpView for ExecutionState {
+    fn ctx(&mut self) -> &mut DeterSLHttpCtx {
+       &mut self.http_ctx 
+    }
+}
+
 impl ExecutionState {
     pub fn new(kv: KVRcMut) -> ExecutionState {
         let mut wasi = WasiCtxBuilder::new();
@@ -39,6 +46,7 @@ impl ExecutionState {
 
         ExecutionState {
             ctx: wasi.build(),
+            http_ctx: DeterSLHttpCtx::new(),
             table: ResourceTable::new(),
             kv
         }

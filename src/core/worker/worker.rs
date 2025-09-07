@@ -6,7 +6,7 @@ use wasmtime::{Engine, Config, component::{Linker, Component}, Store};
 
 use crate::{core::{execution::ExecutionState, types::{self, Output, Event}, bindings, utils::Cache, detersl_wasi::kv::{DummyKV, KVRcMut, KVType}}, config::func_config::{FuncBinaryConfig, FuncExecutionPolicy}};
 
-use super::{linker_builder::{encode_execution_policy, LinkerBuilder}, linker_opts::{get_linker_opts_from_execution_policy, get_kv_as_opt}};
+use super::{linker_builder::{encode_execution_policy, LinkerBuilder}, linker_opts::{get_linker_opts_from_execution_policy, get_kv_as_opt, get_http_as_opt}};
 
 type WorkerError = Box<dyn std::error::Error + Send + Sync>;
 
@@ -40,8 +40,15 @@ impl Worker {
                let mut linker_builder = LinkerBuilder::new(Linker::<ExecutionState>::new(&self.engine));
                let mut linker_opts = get_linker_opts_from_execution_policy(&execution_policy);
                linker_builder.add_opts(&mut linker_opts);
+
+               // Add kv
                linker_opts = get_kv_as_opt(self.kv.clone());
                linker_builder.add_opts(&mut linker_opts);
+
+               // Add http
+               linker_opts = get_http_as_opt();
+               linker_builder.add_opts(&mut linker_opts);
+
                let linker = linker_builder.build();
                
                self.linker_cache.insert(encoded_policy.clone(), linker);
