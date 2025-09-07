@@ -1,5 +1,4 @@
 
-use std::vec;
 
 use wasmtime::component::{Linker, HasData};
 use wasmtime_wasi::p2::{add_clock_to_linker, WasiView, add_random_to_linker, add_cli_to_linker, add_io_to_linker, add_filesystem_to_linker, add_sockets_to_linker};

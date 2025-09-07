@@ -6,7 +6,7 @@ use wasmtime::{Engine, Config, component::{Linker, Component}, Store};
 
 use crate::{core::{execution::ExecutionState, types::{self, Output, Event}, bindings, utils::Cache, detersl_wasi::kv::{DummyKV, KVRcMut, KVType}}, config::func_config::{FuncBinaryConfig, FuncExecutionPolicy}};
 
-use super::{linker_builder::{encode_execution_policy, LinkerBuilder}, linker_opts::{get_linker_opts_from_execution_policy, AddKVToLinker, get_kv_as_opt}};
+use super::{linker_builder::{encode_execution_policy, LinkerBuilder}, linker_opts::{get_linker_opts_from_execution_policy, get_kv_as_opt}};
 
 type WorkerError = Box<dyn std::error::Error + Send + Sync>;
 

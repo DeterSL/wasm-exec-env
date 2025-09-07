@@ -3,7 +3,7 @@ use super::errors::{HttpError, HttpResult};
 use super::types::{FieldMap, HostFields, HostFutureIncomingResponse, DeterSLHttpImpl, HostOutgoingRequest, DeterSLHttpView, HostIncomingResponse, is_forbidden_header, remove_forbidden_headers};
 use super::bindings::detersl::http_api::types::{Headers, Method, Scheme, HeaderError, StatusCode, Trailers, OutgoingRequest, ErrorCode};
 
-use anyhow::{Context, anyhow};
+use anyhow::Context;
 use wasmtime_wasi::{ResourceTable, ResourceTableError};
 use std::any::Any;
 use std::str::FromStr;
