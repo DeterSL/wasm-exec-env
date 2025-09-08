@@ -4,11 +4,12 @@ use super::types::{FieldMap, HostFields, HostFutureIncomingResponse, DeterSLHttp
 use super::bindings::detersl::http_api::types::{Headers, Method, Scheme, HeaderError, StatusCode, Trailers, OutgoingRequest, ErrorCode};
 
 use anyhow::Context;
+use wasmtime_wasi::runtime::poll_noop;
 use wasmtime_wasi::{ResourceTable, ResourceTableError};
 use std::any::Any;
 use std::str::FromStr;
 use wasmtime::component::{Resource};
-use wasmtime_wasi::p2::{IoView, DynInputStream, DynOutputStream};
+use wasmtime_wasi::p2::{IoView, DynInputStream, DynOutputStream, subscribe};
 
 impl<T> super::bindings::detersl::http_api::types::Host for DeterSLHttpImpl<T>
 where
@@ -574,7 +575,14 @@ where
         let resp = self.table().get_mut(&id)?;
 
         match resp {
-            HostFutureIncomingResponse::Pending(_) => return Ok(None),
+            HostFutureIncomingResponse::Pending(f) => {
+                match poll_noop(std::pin::Pin::new(f)) {
+                    Some(result) => {
+                        *resp = HostFutureIncomingResponse::ready(result);
+                    },
+                    None => return Ok(None)
+                }
+            },
             HostFutureIncomingResponse::Consumed => return Ok(Some(Err(()))),
             HostFutureIncomingResponse::Ready(_) => {}
         }

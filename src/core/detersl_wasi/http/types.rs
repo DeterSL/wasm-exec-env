@@ -1,9 +1,11 @@
-use std::any::Any;
+use std::{any::Any, time::Duration};
 
-use wasmtime_wasi::{ResourceTable, p2::{IoView, IoImpl}};
+use http_body_util::BodyExt;
+use tokio::{time::timeout, net::TcpStream};
+use wasmtime_wasi::{ResourceTable, p2::{IoView, IoImpl, Pollable}, runtime::AbortOnDropJoinHandle};
 use hyper::header::HeaderName;
 
-use super::{bindings::detersl::http_api::types::{Method, Scheme, ErrorCode}, body::HostIncomingBody};
+use super::{bindings::detersl::http_api::types::{Method, Scheme, ErrorCode}, body::HostIncomingBody, errors::{dns_error, hyper_request_error}, io::TokioIo};
 
 use super::{body::{HyperOutgoingBody, HyperIncomingBody}, errors::HttpResult};
 
@@ -25,12 +27,12 @@ pub trait DeterSLHttpView: IoView {
         &mut self,
         request: hyper::Request<HyperOutgoingBody>
     ) -> HttpResult<HostFutureIncomingResponse> {
-        let income = HostFutureIncomingResponse::Consumed; 
+        //let income = HostFutureIncomingResponse::Consumed; 
         // TODO
         //
-        println!("heloooooo");
-        Ok(income)
-        //Ok(default_send_request(request))
+        //println!("heloooooo");
+        //Ok(income)
+        Ok(default_send_request(request))
     }
 
     /// Whether a given header should be considered forbidden and not allowed.
@@ -121,6 +123,12 @@ pub const DEFAULT_OUTGOING_BODY_BUFFER_CHUNKS: usize = 1;
 /// The default value configured for [`WasiHttpView::outgoing_body_chunk_size`] in [`WasiHttpView`].
 pub const DEFAULT_OUTGOING_BODY_CHUNK_SIZE: usize = 1024 * 1024;
 
+pub const CONNECT_TIMEOUT: Duration = Duration::from_secs(60);
+
+pub const FIRST_BYTE_CONNECT_TIMEOUT: Duration = Duration::from_secs(60);
+
+pub const CHUNKS_TIMEOUT: Duration = Duration::from_secs(60);
+
 pub(crate) fn is_forbidden_header(view: &mut dyn DeterSLHttpView, name: &HeaderName) -> bool {
     static FORBIDDEN_HEADERS: [HeaderName; 9] = [
         hyper::header::CONNECTION,
@@ -135,6 +143,103 @@ pub(crate) fn is_forbidden_header(view: &mut dyn DeterSLHttpView, name: &HeaderN
     ];
 
     FORBIDDEN_HEADERS.contains(name) || view.is_forbidden_header(name)
+}
+
+/// The default implementation of how an outgoing request is sent.
+///
+/// This implementation is used by the `wasi:http/outgoing-handler` interface
+/// default implementation.
+pub fn default_send_request(
+    request: hyper::Request<HyperOutgoingBody>
+) -> HostFutureIncomingResponse {
+    let handle = wasmtime_wasi::runtime::spawn(async move {
+        Ok(default_send_request_handler(request).await)
+    });
+    HostFutureIncomingResponse::pending(handle)
+}
+
+/// The underlying implementation of how an outgoing request is sent. This should likely be spawned
+/// in a task.
+///
+/// This is called from [default_send_request] to actually send the request.
+pub async fn default_send_request_handler(
+    mut request: hyper::Request<HyperOutgoingBody>
+) -> Result<IncomingResponse, ErrorCode> {
+    let authority = if let Some(authority) = request.uri().authority() {
+        if authority.port().is_some() {
+            authority.to_string()
+        } else {
+            let port = 80;
+            format!("{}:{port}", authority.to_string())
+        }
+    } else {
+        return Err(ErrorCode::HttpRequestUriInvalid);
+    };
+    let tcp_stream = timeout(CONNECT_TIMEOUT, TcpStream::connect(&authority))
+        .await
+        .map_err(|_| ErrorCode::ConnectionTimeout)?
+        .map_err(|e| match e.kind() {
+            std::io::ErrorKind::AddrNotAvailable => {
+                dns_error("address not available".to_string(), 0)
+            }
+
+            _ => {
+                if e.to_string()
+                    .starts_with("failed to lookup address information")
+                {
+                    dns_error("address not available".to_string(), 0)
+                } else {
+                    ErrorCode::ConnectionRefused
+                }
+            }
+        })?;
+
+    let (mut sender, worker) = {
+        let tcp_stream = TokioIo::new(tcp_stream);
+        let (sender, conn) = timeout(
+            CONNECT_TIMEOUT,
+            // TODO: we should plumb the builder through the http context, and use it here
+            hyper::client::conn::http1::handshake(tcp_stream),
+        )
+        .await
+        .map_err(|_| ErrorCode::ConnectionTimeout)?
+        .map_err(hyper_request_error)?;
+
+        let worker = wasmtime_wasi::runtime::spawn(async move {
+            match conn.await {
+                Ok(()) => {}
+                // TODO: same as above, shouldn't throw this error away.
+                Err(e) => println!("Oh!"),
+            }
+        });
+
+        (sender, worker)
+    };
+
+    // at this point, the request contains the scheme and the authority, but
+    // the http packet should only include those if addressing a proxy, so
+    // remove them here, since SendRequest::send_request does not do it for us
+    *request.uri_mut() = http::Uri::builder()
+        .path_and_query(
+            request
+                .uri()
+                .path_and_query()
+                .map(|p| p.as_str())
+                .unwrap_or("/"),
+        )
+        .build()
+        .expect("comes from valid request");
+
+    let resp = timeout(FIRST_BYTE_CONNECT_TIMEOUT, sender.send_request(request))
+        .await
+        .map_err(|_| ErrorCode::ConnectionReadTimeout)?
+        .map_err(hyper_request_error)?
+        .map(|body| body.map_err(hyper_request_error).boxed());
+
+    Ok(IncomingResponse {
+        resp,
+        between_bytes_timeout: CHUNKS_TIMEOUT,
+    })
 }
 
 /// Removes forbidden headers from a [`hyper::HeaderMap`].
@@ -221,7 +326,7 @@ pub enum HostFields {
 
 pub type FieldMap = hyper::HeaderMap;
 
-pub type FutureIncomingResponseHandle = anyhow::Result<Result<IncomingResponse, ErrorCode>>;
+pub type FutureIncomingResponseHandle = AbortOnDropJoinHandle<anyhow::Result<Result<IncomingResponse, ErrorCode>>>;
 
 /// The concrete type behind a `wasi:http/types/outgoing-request` resource.
 #[derive(Debug)]
@@ -285,6 +390,15 @@ impl HostFutureIncomingResponse {
             Self::Pending(_) | Self::Consumed => {
                 panic!("unwrap_ready called on a pending HostFutureIncomingResponse")
             }
+        }
+    }
+}
+
+#[async_trait::async_trait]
+impl Pollable for HostFutureIncomingResponse {
+    async fn ready(&mut self) {
+        if let Self::Pending(handle) = self {
+            *self = Self::Ready(handle.await);
         }
     }
 }

@@ -9,6 +9,7 @@ mod http_impl;
 mod body;
 mod errors;
 mod bindings;
+mod io;
 
 pub fn add_only_http_to_linker_async<T>(
     l: &mut wasmtime::component::Linker<T>,
