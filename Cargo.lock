@@ -326,7 +326,7 @@ dependencies = [
 [[package]]
 name = "cranelift-assembler-x64"
 version = "0.122.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "cranelift-assembler-x64-meta",
 ]
@@ -334,7 +334,7 @@ dependencies = [
 [[package]]
 name = "cranelift-assembler-x64-meta"
 version = "0.122.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "cranelift-srcgen",
 ]
@@ -342,7 +342,7 @@ dependencies = [
 [[package]]
 name = "cranelift-bforest"
 version = "0.122.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "cranelift-entity",
 ]
@@ -350,7 +350,7 @@ dependencies = [
 [[package]]
 name = "cranelift-bitset"
 version = "0.122.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "serde",
  "serde_derive",
@@ -359,7 +359,7 @@ dependencies = [
 [[package]]
 name = "cranelift-codegen"
 version = "0.122.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "bumpalo",
  "cranelift-assembler-x64",
@@ -385,7 +385,7 @@ dependencies = [
 [[package]]
 name = "cranelift-codegen-meta"
 version = "0.122.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "cranelift-assembler-x64-meta",
  "cranelift-codegen-shared",
@@ -396,12 +396,12 @@ dependencies = [
 [[package]]
 name = "cranelift-codegen-shared"
 version = "0.122.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 
 [[package]]
 name = "cranelift-control"
 version = "0.122.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "arbitrary",
 ]
@@ -409,7 +409,7 @@ dependencies = [
 [[package]]
 name = "cranelift-entity"
 version = "0.122.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "cranelift-bitset",
  "serde",
@@ -419,7 +419,7 @@ dependencies = [
 [[package]]
 name = "cranelift-frontend"
 version = "0.122.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "cranelift-codegen",
  "log",
@@ -430,12 +430,12 @@ dependencies = [
 [[package]]
 name = "cranelift-isle"
 version = "0.122.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 
 [[package]]
 name = "cranelift-native"
 version = "0.122.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "cranelift-codegen",
  "libc",
@@ -445,7 +445,7 @@ dependencies = [
 [[package]]
 name = "cranelift-srcgen"
 version = "0.122.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 
 [[package]]
 name = "crc32fast"
@@ -1487,7 +1487,7 @@ dependencies = [
 [[package]]
 name = "pulley-interpreter"
 version = "35.0.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "cranelift-bitset",
  "log",
@@ -1498,7 +1498,7 @@ dependencies = [
 [[package]]
 name = "pulley-macros"
 version = "35.0.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2263,7 +2263,7 @@ dependencies = [
 [[package]]
 name = "wasmtime"
 version = "35.0.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "addr2line",
  "anyhow",
@@ -2318,7 +2318,7 @@ dependencies = [
 [[package]]
 name = "wasmtime-environ"
 version = "35.0.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "anyhow",
  "cpp_demangle",
@@ -2344,7 +2344,7 @@ dependencies = [
 [[package]]
 name = "wasmtime-internal-asm-macros"
 version = "35.0.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "cfg-if",
 ]
@@ -2352,7 +2352,7 @@ dependencies = [
 [[package]]
 name = "wasmtime-internal-cache"
 version = "35.0.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "anyhow",
  "base64",
@@ -2371,7 +2371,7 @@ dependencies = [
 [[package]]
 name = "wasmtime-internal-component-macro"
 version = "35.0.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "anyhow",
  "proc-macro2",
@@ -2385,12 +2385,12 @@ dependencies = [
 [[package]]
 name = "wasmtime-internal-component-util"
 version = "35.0.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 
 [[package]]
 name = "wasmtime-internal-cranelift"
 version = "35.0.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "anyhow",
  "cfg-if",
@@ -2416,7 +2416,7 @@ dependencies = [
 [[package]]
 name = "wasmtime-internal-fiber"
 version = "35.0.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "anyhow",
  "cc",
@@ -2431,7 +2431,7 @@ dependencies = [
 [[package]]
 name = "wasmtime-internal-jit-debug"
 version = "35.0.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "cc",
  "object",
@@ -2442,7 +2442,7 @@ dependencies = [
 [[package]]
 name = "wasmtime-internal-jit-icache-coherence"
 version = "35.0.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "anyhow",
  "cfg-if",
@@ -2453,7 +2453,7 @@ dependencies = [
 [[package]]
 name = "wasmtime-internal-math"
 version = "35.0.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "libm",
 ]
@@ -2461,12 +2461,12 @@ dependencies = [
 [[package]]
 name = "wasmtime-internal-slab"
 version = "35.0.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 
 [[package]]
 name = "wasmtime-internal-unwinder"
 version = "35.0.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "anyhow",
  "cfg-if",
@@ -2478,7 +2478,7 @@ dependencies = [
 [[package]]
 name = "wasmtime-internal-versioned-export-macros"
 version = "35.0.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2488,7 +2488,7 @@ dependencies = [
 [[package]]
 name = "wasmtime-internal-winch"
 version = "35.0.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "anyhow",
  "cranelift-codegen",
@@ -2504,7 +2504,7 @@ dependencies = [
 [[package]]
 name = "wasmtime-internal-wit-bindgen"
 version = "35.0.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "anyhow",
  "heck",
@@ -2515,7 +2515,7 @@ dependencies = [
 [[package]]
 name = "wasmtime-wasi"
 version = "35.0.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2545,7 +2545,7 @@ dependencies = [
 [[package]]
 name = "wasmtime-wasi-io"
 version = "35.0.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2588,7 +2588,7 @@ dependencies = [
 [[package]]
 name = "wiggle"
 version = "35.0.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2602,7 +2602,7 @@ dependencies = [
 [[package]]
 name = "wiggle-generate"
 version = "35.0.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "anyhow",
  "heck",
@@ -2615,7 +2615,7 @@ dependencies = [
 [[package]]
 name = "wiggle-macro"
 version = "35.0.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2657,7 +2657,7 @@ checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 [[package]]
 name = "winch-codegen"
 version = "35.0.0"
-source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#b6bb51567b0fb8e338388f0752fedd05be7971db"
+source = "git+https://github.com/DeterSL/wasmtime.git?branch=release-35.0.0-detersl#f1d760349a17474fecb2dcc64b14d2b466add19a"
 dependencies = [
  "anyhow",
  "cranelift-assembler-x64",
