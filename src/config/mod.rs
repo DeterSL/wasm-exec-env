@@ -1,2 +1,9 @@
-pub mod func_config;
-pub mod func_config_json_parser;
+mod func;
+
+pub use func::{
+    FuncBinaryConfig,
+    FuncBinaryConfigJsonParser,
+    FuncBinaryConfigParser,
+    FuncExecutionPolicy,
+    FuncLinkOpt
+};

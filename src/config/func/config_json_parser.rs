@@ -1,7 +1,8 @@
 use std::fs::File;
 use std::io::Read;
 
-use super::func_config::*;
+use super::config::FuncBinaryConfig;
+use super::config_parser::FuncBinaryConfigParser;
 
 pub struct FuncBinaryConfigJsonParser {
     pub json_file_path: String,

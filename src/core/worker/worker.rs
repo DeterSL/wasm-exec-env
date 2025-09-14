@@ -4,9 +4,9 @@ use tokio::sync::{mpsc, oneshot};
 
 use wasmtime::{Engine, Config, component::{Linker, Component}, Store};
 
-use crate::{core::{execution::ExecutionState, types::{self, Output, Event}, bindings, utils::Cache, detersl_wasi::kv::{DummyKV, KVRcMut, KVType}}, config::func_config::{FuncBinaryConfig, FuncExecutionPolicy}};
+use crate::{core::{execution::ExecutionState, types::{self, Output, Event}, bindings, utils::Cache, detersl_wasi::kv::{DummyKV, KVRcMut, KVType}}, config::{FuncBinaryConfig, FuncLinkOpt}};
 
-use super::{linker_builder::{encode_execution_policy, LinkerBuilder}, linker_opts::{get_linker_opts_from_execution_policy, get_kv_as_opt, get_http_as_opt}};
+use super::{linker_builder::{encode_execution_policy, LinkerBuilder, encode_linker_opt}, linker_opts::{get_linker_opts_from_execution_policy, get_kv_as_opt, get_http_as_opt, get_linker_opts_from_link_opt}};
 
 type WorkerError = Box<dyn std::error::Error + Send + Sync>;
 
@@ -28,17 +28,17 @@ impl Worker {
 
         let dummy_kv: Box<KVType> = Box::new(DummyKV::new());
         let kv = Rc::new(RefCell::new(dummy_kv));
-        Self { engine , linker_cache, kv: kv}
+        Self { engine , linker_cache, kv }
     }
 
-    pub fn generate_or_get_linker_from(&mut self, execution_policy: FuncExecutionPolicy) -> Linker<ExecutionState> {
-        let encoded_policy = encode_execution_policy(&execution_policy);
+    pub fn generate_or_get_linker_from(&mut self, linker_opt: FuncLinkOpt) -> Linker<ExecutionState> {
+        let encoded_policy = encode_linker_opt(&linker_opt);
         let retrived_linker = self.linker_cache.get(&encoded_policy);
         match retrived_linker {
            Some(linker) => linker,
            None => {
                let mut linker_builder = LinkerBuilder::new(Linker::<ExecutionState>::new(&self.engine));
-               let mut linker_opts = get_linker_opts_from_execution_policy(&execution_policy);
+               let mut linker_opts = get_linker_opts_from_link_opt(&linker_opt);
                linker_builder.add_opts(&mut linker_opts);
 
                // Add kv

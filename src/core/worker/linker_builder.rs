@@ -1,7 +1,7 @@
 use wasmtime::component::Linker;
-use wasmtime_wasi::p2::{WasiView};
+use wasmtime_wasi::p2::WasiView;
 
-use crate::config::func_config::FuncExecutionPolicy;
+use crate::config::FuncLinkOpt;
 
 use super::linker_opts::LinkerOption;
 
@@ -30,7 +30,7 @@ where T: WasiView + 'static {
     }
 }
 
-pub fn encode_execution_policy(exeuction_policy: &FuncExecutionPolicy) -> String {
+pub fn encode_linker_opt(linker_opt: &FuncLinkOpt) -> String {
     let mut encode_policy = String::new();
 
     fn encode_on_and_off_field(switch: bool) -> char {
@@ -41,11 +41,11 @@ pub fn encode_execution_policy(exeuction_policy: &FuncExecutionPolicy) -> String
         }
     }
 
-    encode_policy.push(encode_on_and_off_field(exeuction_policy.allow_clocks));
-    encode_policy.push(encode_on_and_off_field(exeuction_policy.allow_filesystem));
-    encode_policy.push(encode_on_and_off_field(exeuction_policy.allow_random));
-    encode_policy.push(encode_on_and_off_field(exeuction_policy.allow_cli));
-    encode_policy.push(encode_on_and_off_field(exeuction_policy.allow_io));
-    encode_policy.push(encode_on_and_off_field(exeuction_policy.allow_socket));
+    encode_policy.push(encode_on_and_off_field(linker_opt.link_clocks));
+    encode_policy.push(encode_on_and_off_field(linker_opt.link_filesystem));
+    encode_policy.push(encode_on_and_off_field(linker_opt.link_random));
+    encode_policy.push(encode_on_and_off_field(linker_opt.link_cli));
+    encode_policy.push(encode_on_and_off_field(linker_opt.link_io));
+    encode_policy.push(encode_on_and_off_field(linker_opt.link_socket));
     encode_policy
 }

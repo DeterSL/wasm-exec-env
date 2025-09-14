@@ -3,7 +3,7 @@
 use wasmtime::component::{Linker, HasData};
 use wasmtime_wasi::p2::{add_clock_to_linker, WasiView, add_random_to_linker, add_cli_to_linker, add_io_to_linker, add_filesystem_to_linker, add_sockets_to_linker};
 
-use crate::{config::func_config::FuncExecutionPolicy, core::{bindings, detersl_wasi::{kv::{KVRcMut, KvView, KVRefMut}, http}}};
+use crate::{config::FuncLinkOpt, core::{bindings, detersl_wasi::{kv::{KVRcMut, KvView, KVRefMut}, http}}};
 
 pub trait LinkerOption<T>
 where T: WasiView {
@@ -142,31 +142,31 @@ where T: http::DeterSLHttpView +  WasiView  + KvView  + 'static {
 }
 
 
-pub fn get_linker_opts_from_execution_policy<T>(execution_policy: &FuncExecutionPolicy) -> Vec<Box<dyn LinkerOption<T>>>
+pub fn get_linker_opts_from_link_opt<T>(linker_opt: &FuncLinkOpt) -> Vec<Box<dyn LinkerOption<T>>>
 where T: WasiView + 'static {
     let mut opts = Vec::<Box<dyn LinkerOption<T>>>::new();
 
-    if execution_policy.allow_clocks {
+    if linker_opt.link_clocks {
         opts.push(AddClockToLinker::new());
     }
 
-    if execution_policy.allow_random {
+    if linker_opt.link_random {
         opts.push(AddRandomToLinker::new());
     }
 
-    if execution_policy.allow_filesystem {
+    if linker_opt.link_filesystem {
         opts.push(AddFSToLinker::new());
     }
 
-    if execution_policy.allow_cli {
+    if linker_opt.link_cli {
         opts.push(AddCliToLinker::new());
     }
 
-    if execution_policy.allow_io {
+    if linker_opt.link_io {
         opts.push(AddIOToLinker::new());
     }
 
-    if execution_policy.allow_socket {
+    if linker_opt.link_socket {
         opts.push(AddSocketsToLinker::new());
     }
 
