@@ -42,12 +42,12 @@ impl Worker {
                linker_builder.add_opts(&mut linker_opts);
 
                // Add kv
-               linker_opts = get_kv_as_opt(self.kv.clone());
-               linker_builder.add_opts(&mut linker_opts);
+               let mut linker_opts_kv = get_kv_as_opt(self.kv.clone());
+               linker_builder.add_opts(&mut linker_opts_kv);
 
                // Add http
-               linker_opts = get_http_as_opt();
-               linker_builder.add_opts(&mut linker_opts);
+               let mut linker_opts_http = get_http_as_opt();
+               linker_builder.add_opts(&mut linker_opts_http);
 
                let linker = linker_builder.build();
                
