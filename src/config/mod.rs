@@ -5,5 +5,9 @@ pub use func::{
     FuncBinaryConfigJsonParser,
     FuncBinaryConfigParser,
     FuncExecutionPolicy,
-    FuncLinkOpt
+    FuncLinkOpt,
+    FuncBinarySource,
+    FuncInitValue,
+
+    make_filters
 };

@@ -4,3 +4,4 @@ pub mod worker;
 pub mod types;
 pub mod bindings;
 pub mod utils;
+pub mod fetcher;
