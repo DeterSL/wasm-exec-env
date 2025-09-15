@@ -12,6 +12,7 @@ type WorkerError = Box<dyn std::error::Error + Send + Sync>;
 
 pub struct FuncJob {
     pub config: FuncBinaryConfig,
+    pub event: types::Event,
     pub reply: oneshot::Sender<Result<types::Output, WorkerError>>,
 }
 
@@ -51,7 +52,7 @@ impl Worker {
         }
     }
 
-    pub fn run_func(&mut self, func_config: FuncBinaryConfig) -> Result<types::Output, WorkerError> {
+    pub fn run_func(&mut self, func_config: FuncBinaryConfig, event: Event) -> Result<types::Output, WorkerError> {
         let clone: KVRcMut = self.kv.clone();
         let mut store = Store::new(&self.engine, ExecutionState::new(clone));
 
@@ -65,9 +66,10 @@ impl Worker {
         end = Instant::now();
         log::info!("instantiate done in {} microseconds", (end-start).as_micros());
 
-        let event: Event = func_config.func_input_event.into();
+        // let event: Event = func_config.func_input_event.into();
 
         start = Instant::now();
+        // let output = world.detersl_api_func_handler().call_handle(store, &event.into_binding())?;
         let output = world.detersl_api_func_handler().call_handle(store, &event.into_binding())?;
         end = Instant::now();
         log::info!("call done in {} microseconds", (end-start).as_micros());
@@ -76,9 +78,8 @@ impl Worker {
     }
 
     pub fn run_forever(&mut self, mut rx: mpsc::Receiver<FuncJob>) {
-        while let Some(FuncJob { config, reply }) = rx.blocking_recv() {
-            let res = self.run_func(config);
-            // Ignore if requester dropped the receiver.
+        while let Some(FuncJob { config, event, reply }) = rx.blocking_recv() {
+            let res = self.run_func(config, event);
             let _ = reply.send(res);
         }
     }

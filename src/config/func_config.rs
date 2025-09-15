@@ -29,23 +29,19 @@ pub struct FuncExecutionPolicy {
 pub struct FuncBinaryConfig {
     pub func_name: String,
     pub func_binary_path: String,
-    pub func_input_event: FuncInputEvent,
+    #[serde(default)]
+    pub func_input_event: Option<FuncInputEvent>,
     pub func_execution_policy: FuncExecutionPolicy
 }
 
 impl FuncBinaryConfig {
     pub fn new(
-        func_name: String, 
-        func_binary_path: String, 
-        func_input_event: FuncInputEvent,
+        func_name: String,
+        func_binary_path: String,
+        func_input_event: Option<FuncInputEvent>,
         func_execution_policy: FuncExecutionPolicy
     ) -> Self {
-        FuncBinaryConfig { 
-            func_name,
-            func_binary_path,
-            func_input_event,
-            func_execution_policy 
-        }
+        FuncBinaryConfig { func_name, func_binary_path, func_input_event, func_execution_policy }
     }
 }
 

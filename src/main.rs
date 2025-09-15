@@ -11,10 +11,19 @@ use hyper::service::service_fn;
 use hyper_util::{rt::TokioIo};
 use tokio::sync::{mpsc, oneshot};
 use http_body_util::BodyExt;
+use crate::config::func_config_json_parser::FuncBinaryConfigJsonParser;
+use crate::config::func_config::FuncBinaryConfigParser;
+
 
 use wasmtime::{Config, CacheConfig, Cache};
 
 use crate::core::worker::Worker;
+
+#[derive(serde::Deserialize)]
+struct RunRequest {
+    config_path: String,
+    event: core::types::Event,
+}
 
 type RespBody = http_body_util::combinators::BoxBody<Bytes, Infallible>;
 
@@ -30,40 +39,27 @@ async fn handle_request(
             };
             let body_bytes = collected.to_bytes();
 
-            let cfg: config::func_config::FuncBinaryConfig = match serde_json::from_slice(&body_bytes) {
+            let run_req: RunRequest = match serde_json::from_slice(&body_bytes) {
                 Ok(c) => c,
-                Err(e) => {
-                    return Ok(resp(
-                        StatusCode::BAD_REQUEST,
-                        format!("invalid JSON for FuncBinaryConfig: {e}"),
-                    ))
-                }
+                Err(e) => return Ok(resp(StatusCode::BAD_REQUEST, format!("invalid JSON for RunRequest: {e}")))
+            };
+
+            // Parse config.json from disk
+            let parser = FuncBinaryConfigJsonParser::new(run_req.config_path.clone());
+            let cfg = match parser.parse() {
+                Ok(c) => c,
+                Err(e) => return Ok(resp(StatusCode::BAD_REQUEST, format!("failed to parse config.json '{}': {e}", run_req.config_path)))
             };
 
             let (reply_tx, reply_rx) = oneshot::channel();
-
-            if let Err(_e) = tx.send(FuncJob { config: cfg, reply: reply_tx }).await {
-                return Ok(resp(
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "worker unavailable".to_string(),
-                ));
+            if let Err(_) = tx.send(FuncJob { config: cfg, event: run_req.event, reply: reply_tx }).await {
+                return Ok(resp(StatusCode::INTERNAL_SERVER_ERROR, "worker unavailable".into()));
             }
 
             match reply_rx.await {
-                Ok(Ok(out)) => {
-                    match serde_json::to_vec(&out) {
-                        Ok(json) => Ok(json_resp(StatusCode::OK, json)),
-                        Err(e) => Ok(resp(
-                            StatusCode::INTERNAL_SERVER_ERROR,
-                            format!("failed to serialize output: {e}"),
-                        )),
-                    }
-                }
+                Ok(Ok(out)) => Ok(json_resp(StatusCode::OK, serde_json::to_vec(&out).unwrap())),
                 Ok(Err(err)) => Ok(resp(StatusCode::INTERNAL_SERVER_ERROR, err.to_string())),
-                Err(_canceled) => Ok(resp(
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "worker dropped".to_string(),
-                )),
+                Err(_) => Ok(resp(StatusCode::INTERNAL_SERVER_ERROR, "worker dropped".into())),
             }
         }
         _ => Ok(resp(StatusCode::NOT_FOUND, "not found".to_string())),
