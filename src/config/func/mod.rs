@@ -9,8 +9,6 @@ mod config_output;
 mod config_inital_values;
 
 pub use config::FuncBinaryConfig;
-pub use config_parser::FuncBinaryConfigParser;
-pub use config_json_parser::FuncBinaryConfigJsonParser;
 pub use config_execution_policy::{FuncExecutionPolicy, make_filters};
 pub use config_link_opt::FuncLinkOpt;
 pub use config_binary_location::FuncBinarySource;
