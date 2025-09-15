@@ -23,7 +23,7 @@ where T: WasiView + 'static {
 
     pub fn build(mut self) -> Linker<T> {
         for mut opt in self.opts {
-            opt.apply_to_linker(&mut self.linker);
+            let _ = opt.apply_to_linker(&mut self.linker);
         }
 
         self.linker

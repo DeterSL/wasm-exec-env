@@ -1,4 +1,4 @@
-use wasmtime::component::{HasData, Linker};
+use wasmtime::component::HasData;
 use wasmtime_wasi::p2::IoImpl;
 
 pub use self::types::{DeterSLHttpView, DeterSLHttpImpl, DeterSLHttpCtx};

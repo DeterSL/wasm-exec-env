@@ -4,7 +4,7 @@ use tokio::sync::{mpsc, oneshot};
 
 use wasmtime::{Engine, Config, component::{Linker, Component}, Store};
 
-use crate::{core::{execution::ExecutionState, types::{self, Output, Event}, bindings, utils::Cache, detersl_wasi::kv::{DummyKV, KVRcMut, KVType}}, config::{FuncBinaryConfig, FuncLinkOpt}};
+use crate::{core::{execution::ExecutionState, types::{self, Output, Event}, bindings, utils::Cache, detersl_wasi::kv::{DummyKV, KVRcMut, KVType}, fetcher::get_component_fetcher_for_source}, config::{FuncBinaryConfig, FuncLinkOpt}};
 
 use super::{linker_builder::{LinkerBuilder, encode_linker_opt}, linker_opts::{get_kv_as_opt, get_http_as_opt, get_linker_opts_from_link_opt}};
 
@@ -31,7 +31,7 @@ impl Worker {
         Self { engine , linker_cache, kv }
     }
 
-    pub fn generate_or_get_linker_from(&mut self, linker_opt: FuncLinkOpt) -> Linker<ExecutionState> {
+    pub fn generate_or_get_linker_from(&mut self, linker_opt: &FuncLinkOpt) -> Linker<ExecutionState> {
         let encoded_policy = encode_linker_opt(&linker_opt);
         let retrived_linker = self.linker_cache.get(&encoded_policy);
         match retrived_linker {
@@ -60,16 +60,17 @@ impl Worker {
 
     pub fn run_func(&mut self, func_config: FuncBinaryConfig) -> Result<types::Output, WorkerError> {
         let clone: KVRcMut = self.kv.clone();
-        let mut store = Store::new(&self.engine, ExecutionState::new(clone));
+        let mut store = Store::new(&self.engine, ExecutionState::new(clone,
+                &func_config.func_execution_policy,
+                &func_config.func_initial_values));
+
+        let component = self.fetch_component(&func_config)?;
+    
+        let linker_base_on_policy = self.generate_or_get_linker_from(&func_config.func_link_opt);
 
         let mut start = Instant::now();
-        let component = Component::from_file(&self.engine, func_config.func_binary_path)?;
-        let mut end = Instant::now();
-        log::info!("component built in {} microseconds", (end-start).as_micros());
-    
-        let linker_base_on_policy = self.generate_or_get_linker_from(func_config.func_execution_policy); start = Instant::now();
         let world = bindings::DeterslApi::instantiate(&mut store, &component, &linker_base_on_policy)?;
-        end = Instant::now();
+        let mut end = Instant::now();
         log::info!("instantiate done in {} microseconds", (end-start).as_micros());
 
         let event: Event = func_config.func_input_event.into();
@@ -80,6 +81,16 @@ impl Worker {
         log::info!("call done in {} microseconds", (end-start).as_micros());
 
         Ok(Output::from(output))
+    }
+
+    pub fn fetch_component(&self, func_config: &FuncBinaryConfig) -> anyhow::Result<Component> {
+        let start = Instant::now();
+        let fetcher = get_component_fetcher_for_source(&func_config.func_binary_source)?;
+        let component_path_buf = fetcher.fetch(&func_config.func_binary_source)?;
+        let component = Component::from_file(&self.engine, component_path_buf.as_path())?;
+        let end = Instant::now();
+        log::info!("component built in {} microseconds", (end-start).as_micros());
+        Ok(component)
     }
 
     pub fn run_forever(&mut self, mut rx: mpsc::Receiver<FuncJob>) {

@@ -1,4 +1,4 @@
-use crate::{bindings::exports::detersl::api::func_handler, config::func_config::FuncInputEvent};
+use crate::{bindings::exports::detersl::api::func_handler, config::FuncInputEvent};
 
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct Event {
@@ -13,6 +13,13 @@ impl Event {
 
 impl From<FuncInputEvent> for Event {
     fn from(value: FuncInputEvent) -> Self {
-        Self { data: value.data }
+        match value {
+           FuncInputEvent::Data { data } => {
+                Self { data }
+           }
+           FuncInputEvent::KV { key: _key } => {
+               panic!("not implemented!");
+           }
+        }
     }
 }

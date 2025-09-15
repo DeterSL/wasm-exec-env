@@ -20,7 +20,7 @@ impl AddClockToLinker {
 impl<T> LinkerOption<T> for AddClockToLinker 
 where T: WasiView  + 'static{
     fn apply_to_linker(&mut self, linker: &mut Linker<T>) -> anyhow::Result<()> {
-        add_clock_to_linker(linker);
+        let _ = add_clock_to_linker(linker);
         Ok(())
     }
 }
@@ -35,7 +35,7 @@ impl AddRandomToLinker {
 impl<T> LinkerOption<T> for AddRandomToLinker 
 where T: WasiView  + 'static{
     fn apply_to_linker(&mut self, linker: &mut Linker<T>) -> anyhow::Result<()> {
-        add_random_to_linker(linker);
+        let _ = add_random_to_linker(linker);
         Ok(())
     }
 }
@@ -50,7 +50,7 @@ impl AddCliToLinker {
 impl<T> LinkerOption<T> for AddCliToLinker 
 where T: WasiView  + 'static{
     fn apply_to_linker(&mut self, linker: &mut Linker<T>) -> anyhow::Result<()> {
-        add_cli_to_linker(linker);
+        let _ = add_cli_to_linker(linker);
         Ok(())
     }
 }
@@ -65,7 +65,7 @@ impl AddIOToLinker {
 impl<T> LinkerOption<T> for AddIOToLinker 
 where T: WasiView  + 'static{
     fn apply_to_linker(&mut self, linker: &mut Linker<T>) -> anyhow::Result<()> {
-        add_io_to_linker(linker);
+        let _ = add_io_to_linker(linker);
         Ok(())
     }
 }
@@ -80,7 +80,7 @@ impl AddFSToLinker {
 impl<T> LinkerOption<T> for AddFSToLinker 
 where T: WasiView  + 'static{
     fn apply_to_linker(&mut self, linker: &mut Linker<T>) -> anyhow::Result<()> {
-        add_filesystem_to_linker(linker);
+        let _ = add_filesystem_to_linker(linker);
         Ok(())
     }
 }
@@ -95,7 +95,7 @@ impl AddSocketsToLinker {
 impl<T> LinkerOption<T> for AddSocketsToLinker 
 where T: WasiView  + 'static {
     fn apply_to_linker(&mut self, linker: &mut Linker<T>) -> anyhow::Result<()> {
-        add_sockets_to_linker(linker);
+        let _ = add_sockets_to_linker(linker);
         Ok(())
     }
 }

@@ -15,3 +15,4 @@ pub use config_execution_policy::{FuncExecutionPolicy, make_filters};
 pub use config_link_opt::FuncLinkOpt;
 pub use config_binary_location::FuncBinarySource;
 pub use config_inital_values::FuncInitValue;
+pub use config_input::FuncInputEvent;

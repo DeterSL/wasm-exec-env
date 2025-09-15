@@ -8,6 +8,7 @@ pub use func::{
     FuncLinkOpt,
     FuncBinarySource,
     FuncInitValue,
+    FuncInputEvent,
 
     make_filters
 };

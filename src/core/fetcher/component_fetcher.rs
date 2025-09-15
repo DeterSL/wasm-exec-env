@@ -10,8 +10,7 @@ pub trait ComponentFetcher {
 
 pub fn get_component_fetcher_for_source(source: &FuncBinarySource) -> anyhow::Result<Box<dyn ComponentFetcher>> {
     match source {
-       FuncBinarySource::Fs { _path } => Ok(FsFetcher::new()), 
-       FuncBinarySource::Http { url, headers } => Ok(HttpFetcher::new()),
-       _ => Err(anyhow::anyhow!("the provided source is invalid")) 
+       FuncBinarySource::Fs { path: _path } => Ok(FsFetcher::new()), 
+       FuncBinarySource::Http { url: _url, headers: _headers } => Ok(HttpFetcher::new())
     }
 }

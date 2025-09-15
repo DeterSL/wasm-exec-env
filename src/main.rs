@@ -30,7 +30,7 @@ async fn handle_request(
             };
             let body_bytes = collected.to_bytes();
 
-            let cfg: config::func_config::FuncBinaryConfig = match serde_json::from_slice(&body_bytes) {
+            let cfg: config::FuncBinaryConfig = match serde_json::from_slice(&body_bytes) {
                 Ok(c) => c,
                 Err(e) => {
                     return Ok(resp(

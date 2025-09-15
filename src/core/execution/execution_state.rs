@@ -40,8 +40,8 @@ impl ExecutionState {
         let mut wasi = WasiCtxBuilder::new();
         ExecutionState::apply_initial_values(&mut wasi, inital_values);
 
-        let mut event_filter = EventHandlerImpl::new();
-        let mut filters = make_filters(execution_policy); 
+        let mut event_filter = Box::new(EventHandlerImpl::new());
+        let filters = make_filters(execution_policy); 
 
         for (td, filterFn) in filters {
             event_filter.register(td, filterFn);
@@ -56,12 +56,12 @@ impl ExecutionState {
         }
     }
 
-    fn apply_initial_values(wasi: &mut WasiCtx, inital_values: &FuncInitValue) {
+    fn apply_initial_values(wasi: &mut WasiCtxBuilder, inital_values: &FuncInitValue) {
         wasi.monotonic_clock(detersl_wasi::clock::DeterSLMonotonicWallClock::new(inital_values.init_clock));
         wasi.wall_clock(detersl_wasi::clock::DeterSLWallClock::from_nanos(inital_values.init_clock));
         wasi.insecure_random_seed(inital_values.random_seed);
-        wasi.insecure_random(detersl_wasi::random::ConstantRng::new(inital_values.random_seed));
-        wasi.secure_random(detersl_wasi::random::ConstantRng::new(inital_values.random_seed));
+        wasi.insecure_random(detersl_wasi::random::ConstantRng::new(inital_values.random_seed.try_into().unwrap()));
+        wasi.secure_random(detersl_wasi::random::ConstantRng::new(inital_values.random_seed.try_into().unwrap()));
         wasi.set_logger(detersl_wasi::logger::SimpleLogger::new());
     }
 }
