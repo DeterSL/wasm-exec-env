@@ -1,6 +1,6 @@
 use serde::Deserialize;
 use wasmtime_wasi::p2::{ClockEvent, FSEvent, RndEvent, UDPEvent, TCPEvent, EnvEvent, ExitEvent};
-use std::{any::{Any, TypeId}, sync::Arc};
+use std::any::{Any, TypeId};
 
 use wasmtime::FilterFn;
 

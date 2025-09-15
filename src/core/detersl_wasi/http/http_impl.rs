@@ -1,7 +1,7 @@
 use bytes::Bytes;
 use http_body_util::{Empty, BodyExt};
-use wasmtime::component::{Resource, __internal::wasmtime_environ::wasmparser::Subsection};
-use wasmtime_wasi::p2::{IoView, subscribe};
+use wasmtime::component::Resource;
+use wasmtime_wasi::p2::IoView;
 
 use super::{types::{DeterSLHttpImpl, DeterSLHttpView, HostOutgoingRequest, HostFutureIncomingResponse}, errors::{HttpResult, http_request_error, internal_error}};
 

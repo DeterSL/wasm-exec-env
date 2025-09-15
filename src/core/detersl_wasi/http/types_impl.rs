@@ -9,7 +9,7 @@ use wasmtime_wasi::{ResourceTable, ResourceTableError};
 use std::any::Any;
 use std::str::FromStr;
 use wasmtime::component::{Resource};
-use wasmtime_wasi::p2::{IoView, DynInputStream, DynOutputStream, subscribe};
+use wasmtime_wasi::p2::{IoView, DynInputStream, DynOutputStream};
 
 impl<T> super::bindings::detersl::http_api::types::Host for DeterSLHttpImpl<T>
 where
