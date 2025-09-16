@@ -9,8 +9,7 @@ pub struct ExecutionState {
     ctx: WasiCtx,
     table: ResourceTable,
     kv: KVRcMut,
-    http_ctx: DeterSLHttpCtx,
-    event_filter: Box<dyn EventHandler>
+    http_ctx: DeterSLHttpCtx
 }
 
 unsafe impl Send for ExecutionState {}
@@ -43,16 +42,17 @@ impl ExecutionState {
         let mut event_filter = Box::new(EventHandlerImpl::new());
         let filters = make_filters(execution_policy); 
 
-        for (td, filterFn) in filters {
-            event_filter.register(td, filterFn);
+        for (td, filter_fn) in filters {
+            event_filter.register(td, filter_fn);
         }
+
+        wasi.set_event_handler(*event_filter);
         
         ExecutionState {
             ctx: wasi.build(),
             http_ctx: DeterSLHttpCtx::new(),
             table: ResourceTable::new(),
-            kv,
-            event_filter
+            kv
         }
     }
 

@@ -116,7 +116,7 @@ pub fn make_clock_filter(policy: &FuncExecutionPolicy) -> Option<FilterFn> {
     };
 
     if mask == 0 {
-        return None;
+        return Some(Box::new(|_any: &dyn Any| { false }));
     }
 
     let m = mask;
@@ -151,7 +151,7 @@ pub fn make_fs_filter(policy: &FuncExecutionPolicy) -> Option<FilterFn> {
         .unwrap_or_default();
 
     if mask == 0 && other_allowed.is_empty() {
-        return None;
+        return Some(Box::new(|_any: &dyn Any| { false }));
     }
 
     Some(Box::new(move |any: &dyn Any| {
@@ -172,7 +172,7 @@ pub fn make_fs_filter(policy: &FuncExecutionPolicy) -> Option<FilterFn> {
 pub fn make_random_filter(policy: &FuncExecutionPolicy) -> Option<FilterFn> {
     let allow = policy.allow_random;
     if !allow {
-        return None;
+        return Some(Box::new(|_any: &dyn Any| { false }));
     }
     
     Some(Box::new(move |any: &dyn Any| {
@@ -183,7 +183,7 @@ pub fn make_random_filter(policy: &FuncExecutionPolicy) -> Option<FilterFn> {
 pub fn make_cli_filter(policy: &FuncExecutionPolicy) -> Option<FilterFn> {
     let allow = policy.allow_cli;
     if !allow {
-        return None;
+        return Some(Box::new(|_any: &dyn Any| { false }));
     }
     
     Some(Box::new(move |any: &dyn Any| {
