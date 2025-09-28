@@ -2,7 +2,7 @@ use std::{time::Instant, rc::Rc, cell::RefCell};
 
 use tokio::sync::{mpsc, oneshot};
 
-use wasmtime::{Engine, Config, component::{Linker, Component}, Store};
+use wasmtime::{component::{Component, Linker}, Config, Engine, Store};
 
 use crate::{core::{execution::ExecutionState, types::{self, Output, Event}, bindings, utils::Cache, detersl_wasi::kv::{DummyKV, KVRcMut, KVType}, fetcher::get_component_fetcher_for_source}, config::{FuncBinaryConfig, FuncLinkOpt}};
 
@@ -68,8 +68,11 @@ impl Worker {
     
         let linker_base_on_policy = self.generate_or_get_linker_from(&func_config.func_link_opt);
 
+        let instance_pre = linker_base_on_policy.instantiate_pre(&component)?;
+        let detersl_pre = bindings::DeterslApiPre::new(instance_pre)?;
+
         let mut start = Instant::now();
-        let world = bindings::DeterslApi::instantiate(&mut store, &component, &linker_base_on_policy)?;
+        let world = detersl_pre.clone().instantiate(&mut store)?;
         let mut end = Instant::now();
         log::info!("instantiate done in {} microseconds", (end-start).as_micros());
 
@@ -88,6 +91,7 @@ impl Worker {
         let fetcher = get_component_fetcher_for_source(&func_config.func_binary_source)?;
         let component_path_buf = fetcher.fetch(&func_config.func_binary_source)?;
         let component = Component::from_file(&self.engine, component_path_buf.as_path())?;
+        //let component = Component::from_file_with_hash(&self.engine, component_path_buf.as_path(), func_config.func_binary_hash.clone())?;
         let end = Instant::now();
         log::info!("component built in {} microseconds", (end-start).as_micros());
         Ok(component)
