@@ -35,7 +35,7 @@ impl DeterSLFuncInvocable {
         }
     }
 
-    fn invoke(self, input: types::Event) -> anyhow::Result<types::Output> {
+    pub fn invoke(self, input: types::Event) -> anyhow::Result<types::Output> {
         match self.instance {
             Some(instance) => {
                 let output = instance.detersl_api_func_handler().call_handle(self.store.unwrap(), &input.into_binding())?;

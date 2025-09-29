@@ -1,13 +1,11 @@
 use std::time::Instant;
 
 use tokio::sync::{mpsc, oneshot};
+use wasmtime::Config;
 
-use wasmtime::{component::{Component, Linker}, Config, Engine, Store};
+use crate::{config::FuncBinaryConfig, core::{detersl_wasi::kv::{DummyKV, KVType}, engine::{DeterSLEngine, DeterSLEngineConfig}, executioner::DeterSLExecutioner, types}};
 
-use crate::{core::{execution::ExecutionState, types::{self, Output, Event}, bindings, utils::Cache, detersl_wasi::kv::{DummyKV, KVType}, fetcher::get_component_fetcher_for_source}, config::{FuncBinaryConfig, FuncLinkOpt}};
-
-use super::{linker_builder::{LinkerBuilder, encode_linker_opt}, linker_opts::{get_kv_as_opt, get_http_as_opt, get_linker_opts_from_link_opt}};
-
+// Keep your error alias
 type WorkerError = Box<dyn std::error::Error + Send + Sync>;
 
 pub struct FuncJob {
@@ -15,93 +13,51 @@ pub struct FuncJob {
     pub reply: oneshot::Sender<Result<types::Output, WorkerError>>,
 }
 
+// Executioner-based worker
 pub struct Worker {
-    engine: Engine,
-    linker_cache: Cache<Linker<ExecutionState>>,
-    kv: Box<dyn KVType>
+    exec: DeterSLExecutioner,
 }
 
 impl Worker {
-    pub fn new(engine_config: Config) -> Self {
-        let engine = Engine::new(&engine_config).unwrap(); 
-        let linker_cache = Cache::new();
+    // Build a worker with a fresh DeterSLEngine and a default DummyKV backend.
+    // You can add overloads to inject a custom KV or custom engine if needed.
+    pub fn new(engine_config: Config, detersl_engine_config: DeterSLEngineConfig) -> Self {
+        let engine = wasmtime::Engine::new(&engine_config).expect("engine");
+        let detersl_engine = DeterSLEngine::new(engine, detersl_engine_config).expect("couldnt made the engine");
 
-        let dummy_kv: Box<dyn KVType> = Box::new(DummyKV::new());
-        Self { engine , linker_cache, kv: dummy_kv }
+        // Build an executioner and inject a KV backend.
+        let mut exec = DeterSLExecutioner::new(detersl_engine);
+        let kv: Box<dyn KVType> = Box::new(DummyKV::new());
+        exec = exec.with_kv(kv);
+
+        Self { exec }
     }
 
-    pub fn generate_or_get_linker_from(&mut self, linker_opt: &FuncLinkOpt) -> Linker<ExecutionState> {
-        let encoded_policy = encode_linker_opt(&linker_opt);
-        let retrived_linker = self.linker_cache.get(&encoded_policy);
-        match retrived_linker {
-           Some(linker) => linker,
-           None => {
-               let mut linker_builder = LinkerBuilder::new(Linker::<ExecutionState>::new(&self.engine));
-               let mut linker_opts = get_linker_opts_from_link_opt(&linker_opt);
-               linker_builder.add_opts(&mut linker_opts);
-
-               // Add kv
-               let mut linker_opts_kv = get_kv_as_opt(self.kv.clone());
-               linker_builder.add_opts(&mut linker_opts_kv);
-
-               // Add http
-               let mut linker_opts_http = get_http_as_opt();
-               linker_builder.add_opts(&mut linker_opts_http);
-
-               let linker = linker_builder.build();
-               
-               self.linker_cache.insert(encoded_policy.clone(), linker);
-               let retrived_linker = self.linker_cache.get(&encoded_policy).unwrap();
-               retrived_linker
-           }
-        }
+    // Optional convenience constructor when you already have a DeterSLEngine and KV
+    pub fn from_parts(engine: DeterSLEngine) -> Self {
+        let mut exec = DeterSLExecutioner::new(engine);
+        let kv: Box<dyn KVType> = Box::new(DummyKV::new());
+        exec = exec.with_kv(kv);
+        Self { exec }
     }
 
     pub fn run_func(&mut self, func_config: FuncBinaryConfig) -> Result<types::Output, WorkerError> {
-        let clone =
-self.kv.clone();
-        let mut store = Store::new(&self.engine, ExecutionState::new(clone,
-                &func_config.func_execution_policy,
-                &func_config.func_initial_values));
-
-        let component = self.fetch_component(&func_config)?;
-    
-        let linker_base_on_policy = self.generate_or_get_linker_from(&func_config.func_link_opt);
-
-        let instance_pre = linker_base_on_policy.instantiate_pre(&component)?;
-        let detersl_pre = bindings::DeterslApiPre::new(instance_pre)?;
-
-        let mut start = Instant::now();
-        let world = detersl_pre.clone().instantiate(&mut store)?;
-        let mut end = Instant::now();
-        log::info!("instantiate done in {} microseconds", (end-start).as_micros());
-
-        let event: Event = func_config.func_input_event.into();
-
-        start = Instant::now();
-        let output = world.detersl_api_func_handler().call_handle(store, &event.into_binding())?;
-        end = Instant::now();
-        log::info!("call done in {} microseconds", (end-start).as_micros());
-
-        Ok(Output::from(output))
-    }
-
-    pub fn fetch_component(&self, func_config: &FuncBinaryConfig) -> anyhow::Result<Component> {
-        let start = Instant::now();
-        let fetcher = get_component_fetcher_for_source(&func_config.func_binary_source)?;
-        let component_path_buf = fetcher.fetch(&func_config.func_binary_source)?;
-        let component = Component::from_file(&self.engine, component_path_buf.as_path())?;
-        //let component = Component::from_file_with_hash(&self.engine, component_path_buf.as_path(), func_config.func_binary_hash.clone())?;
-        let end = Instant::now();
-        log::info!("component built in {} microseconds", (end-start).as_micros());
-        Ok(component)
+        // The executioner handles compile/cache/instantiate/invoke internally
+        self.exec
+            .run_func_with_config(func_config)
+            .map_err(|e| -> WorkerError { e.into() })
     }
 
     pub fn run_forever(&mut self, mut rx: mpsc::Receiver<FuncJob>) {
+        // Synchronous loop receiving jobs from an async channel is fine here.
         while let Some(FuncJob { config, reply }) = rx.blocking_recv() {
+            let start = Instant::now();
             let res = self.run_func(config);
+            let end = Instant::now();
+            log::info!("worker run_func finished in {} µs", (end - start).as_micros());
             // Ignore if requester dropped the receiver.
             let _ = reply.send(res);
         }
     }
 }
+

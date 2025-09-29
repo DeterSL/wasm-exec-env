@@ -57,7 +57,7 @@ impl DefaultFuncInvocableBuilder {
     }
 }
 
-fn build_state(func_config: &FuncBinaryConfig, kv: Box<dyn KVType>) -> anyhow::Result<ExecutionState> {
+pub fn build_state(func_config: &FuncBinaryConfig, kv: Box<dyn KVType>) -> anyhow::Result<ExecutionState> {
     Ok(ExecutionState::new(kv, &func_config.func_execution_policy, &func_config.func_initial_values))
 }
 
