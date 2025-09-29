@@ -1,4 +1,4 @@
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, Clone)]
 pub struct FuncLinkOpt {
     #[serde(default)]
     pub link_clocks: bool,

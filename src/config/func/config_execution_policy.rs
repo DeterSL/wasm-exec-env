@@ -4,7 +4,7 @@ use std::any::{Any, TypeId};
 
 use wasmtime::FilterFn;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct FuncExecutionPolicy {
     #[serde(default)]
     pub allow_clocks: bool,
@@ -37,7 +37,7 @@ pub struct FuncExecutionPolicy {
     pub socket: Option<SocketPolicy>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct ClockPolicy {
     #[serde(default)]
     pub wall_clock: bool,
@@ -45,7 +45,7 @@ pub struct ClockPolicy {
     pub monotonic_clock: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct FsPolicy {
     #[serde(default)]
     pub read_fs: bool,
@@ -67,7 +67,7 @@ pub struct FsPolicy {
     pub other_allowed: Vec<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct UdpPolicy {
     #[serde(default)]
     pub receive: bool,
@@ -79,7 +79,7 @@ pub struct UdpPolicy {
     pub options_allowed: Vec<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct TcpPolicy {
     #[serde(default)]
     pub read: bool,
@@ -97,7 +97,7 @@ pub struct TcpPolicy {
     pub options_allowed: Vec<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct SocketPolicy {
     #[serde(default)]
     pub udp: Option<UdpPolicy>,

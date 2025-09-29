@@ -1,10 +1,10 @@
-use std::{time::Instant, rc::Rc, cell::RefCell};
+use std::time::Instant;
 
 use tokio::sync::{mpsc, oneshot};
 
 use wasmtime::{component::{Component, Linker}, Config, Engine, Store};
 
-use crate::{core::{execution::ExecutionState, types::{self, Output, Event}, bindings, utils::Cache, detersl_wasi::kv::{DummyKV, KVRcMut, KVType}, fetcher::get_component_fetcher_for_source}, config::{FuncBinaryConfig, FuncLinkOpt}};
+use crate::{core::{execution::ExecutionState, types::{self, Output, Event}, bindings, utils::Cache, detersl_wasi::kv::{DummyKV, KVType}, fetcher::get_component_fetcher_for_source}, config::{FuncBinaryConfig, FuncLinkOpt}};
 
 use super::{linker_builder::{LinkerBuilder, encode_linker_opt}, linker_opts::{get_kv_as_opt, get_http_as_opt, get_linker_opts_from_link_opt}};
 
@@ -18,7 +18,7 @@ pub struct FuncJob {
 pub struct Worker {
     engine: Engine,
     linker_cache: Cache<Linker<ExecutionState>>,
-    kv: Rc<RefCell<Box<KVType>>>
+    kv: Box<dyn KVType>
 }
 
 impl Worker {
@@ -26,9 +26,8 @@ impl Worker {
         let engine = Engine::new(&engine_config).unwrap(); 
         let linker_cache = Cache::new();
 
-        let dummy_kv: Box<KVType> = Box::new(DummyKV::new());
-        let kv = Rc::new(RefCell::new(dummy_kv));
-        Self { engine , linker_cache, kv }
+        let dummy_kv: Box<dyn KVType> = Box::new(DummyKV::new());
+        Self { engine , linker_cache, kv: dummy_kv }
     }
 
     pub fn generate_or_get_linker_from(&mut self, linker_opt: &FuncLinkOpt) -> Linker<ExecutionState> {
@@ -59,7 +58,8 @@ impl Worker {
     }
 
     pub fn run_func(&mut self, func_config: FuncBinaryConfig) -> Result<types::Output, WorkerError> {
-        let clone: KVRcMut = self.kv.clone();
+        let clone =
+self.kv.clone();
         let mut store = Store::new(&self.engine, ExecutionState::new(clone,
                 &func_config.func_execution_policy,
                 &func_config.func_initial_values));

@@ -3,7 +3,7 @@
 use wasmtime::component::{Linker, HasData};
 use wasmtime_wasi::p2::{add_clock_to_linker, WasiView, add_random_to_linker, add_cli_to_linker, add_io_to_linker, add_filesystem_to_linker, add_sockets_to_linker};
 
-use crate::{config::FuncLinkOpt, core::{bindings, detersl_wasi::{kv::{KVRcMut, KvView, KVRefMut}, http}}};
+use crate::{config::FuncLinkOpt, core::{bindings, detersl_wasi::{http, kv::{KVType, KvView}}}};
 
 pub trait LinkerOption<T>
 where T: WasiView {
@@ -101,11 +101,11 @@ where T: WasiView  + 'static {
 }
 
 pub struct AddKVToLinker {
-    kv: KVRcMut 
+    kv: Box<dyn KVType>
 }
 
 impl AddKVToLinker {
-    fn new(kv: KVRcMut) -> Box<Self> {
+    fn new(kv: Box<dyn KVType>) -> Box<Self> {
         Box::new(Self { kv })
     } 
 }
@@ -113,13 +113,13 @@ impl AddKVToLinker {
 struct HasKV();
 
 impl HasData for HasKV {
-    type Data<'a> = KVRefMut<'a>;
+    type Data<'a> = &'a mut dyn KVType;
 }
 
 impl<T> LinkerOption<T> for AddKVToLinker
 where T: WasiView  + KvView  + 'static {
     fn apply_to_linker(&mut self, linker: &mut Linker<T>) -> anyhow::Result<()> {
-        let f: fn(&mut T) -> KVRefMut = |t| t.kv().borrow_mut();
+        let f: fn(&mut T) -> &mut dyn KVType = |t| t.kv();
         bindings::detersl::kv_api::kv::add_to_linker::<T, HasKV>(linker, f).unwrap();
         Ok(())
     }
@@ -173,7 +173,7 @@ where T: WasiView + 'static {
     opts
 }
 
-pub fn get_kv_as_opt<T>(kv: KVRcMut) -> Vec<Box<dyn LinkerOption<T>>>
+pub fn get_kv_as_opt<T>(kv: Box<dyn KVType>) -> Vec<Box<dyn LinkerOption<T>>>
 where T: KvView + WasiView + 'static{
     let mut opts = Vec::<Box<dyn LinkerOption<T>>>::new();
     opts.push(AddKVToLinker::new(kv));

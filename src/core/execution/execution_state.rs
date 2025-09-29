@@ -2,13 +2,13 @@
 use wasmtime::EventHandler;
 use wasmtime_wasi::{p2::{WasiCtx, IoView, WasiView, WasiCtxBuilder, event_handler::EventHandlerImpl}, ResourceTable};
 
-use crate::{core::detersl_wasi::{self, kv::{KVRcMut, KvView, KVRefCellMut}, http::{DeterSLHttpView, DeterSLHttpCtx}}, config::{FuncExecutionPolicy, FuncInitValue, make_filters}};
+use crate::{config::{make_filters, FuncExecutionPolicy, FuncInitValue}, core::detersl_wasi::{self, http::{DeterSLHttpCtx, DeterSLHttpView}, kv::{KVType, KvView}}};
 
 
 pub struct ExecutionState {
     ctx: WasiCtx,
     table: ResourceTable,
-    kv: KVRcMut,
+    kv: Box<dyn KVType>,
     http_ctx: DeterSLHttpCtx
 }
 
@@ -23,8 +23,8 @@ impl WasiView for ExecutionState {
 }
 
 impl KvView for ExecutionState {
-    fn kv(&mut self) -> &KVRefCellMut {
-        &*self.kv
+    fn kv(&mut self) -> &mut dyn KVType {
+        &mut *self.kv
     }
 }
 
@@ -35,7 +35,7 @@ impl DeterSLHttpView for ExecutionState {
 }
 
 impl ExecutionState {
-    pub fn new(kv: KVRcMut, execution_policy: &FuncExecutionPolicy, inital_values: &FuncInitValue) -> ExecutionState {
+    pub fn new(kv: Box<dyn KVType>, execution_policy: &FuncExecutionPolicy, inital_values: &FuncInitValue) -> ExecutionState {
         let mut wasi = WasiCtxBuilder::new();
         ExecutionState::apply_initial_values(&mut wasi, inital_values);
 

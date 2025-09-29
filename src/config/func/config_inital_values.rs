@@ -1,4 +1,4 @@
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, Clone)]
 pub struct FuncInitValue {
     #[serde(default)]
     pub init_clock: u64,

@@ -14,3 +14,10 @@ pub fn get_component_fetcher_for_source(source: &FuncBinarySource) -> anyhow::Re
        FuncBinarySource::Http { url: _url, headers: _headers } => Ok(HttpFetcher::new())
     }
 }
+
+pub type OneTimeFetcherFn = Box<dyn Fn() -> anyhow::Result<PathBuf>>;
+pub fn get_one_time_component_fetcher_for_source(source: &FuncBinarySource) -> anyhow::Result<OneTimeFetcherFn> {
+    let fetcher = get_component_fetcher_for_source(source)?;
+    let owned_source = source.clone();
+    Ok(Box::new(Box::new(move || fetcher.fetch(&owned_source))))
+}

@@ -1,26 +1,39 @@
 mod dummykv;
 mod kv_view;
 
-use std::{rc::Rc, cell::{RefCell, RefMut}};
-
 use crate::core::bindings;
 
-pub type KVType = dyn bindings::detersl::kv_api::kv::Host + Send + 'static;
-pub type KVRcMut = Rc<RefCell<Box<KVType>>>;
-pub type KVRefCellMut = RefCell<Box<KVType>>;
-pub type KVRefMut<'a> = RefMut<'a, Box<KVType>>;
+pub type DynKVType = dyn bindings::detersl::kv_api::kv::Host;
 
-impl<'a, T: bindings::detersl::kv_api::kv::Host + ?Sized> bindings::detersl::kv_api::kv::Host for RefMut<'a, Box<T>> {
+pub trait KVType: bindings::detersl::kv_api::kv::Host + KVTypeClone {}
+
+pub trait KVTypeClone {
+    fn clone_to_box(&self) -> Box<dyn KVType>;
+}
+
+impl<T> KVTypeClone for T where T: KVType + Clone + 'static {
+    fn clone_to_box(&self) -> Box<dyn KVType> {
+        Box::new(self.clone())
+    }
+}
+
+impl Clone for Box<dyn KVType> {
+    fn clone(&self) -> Self {
+       self.clone_to_box() 
+    }
+}
+
+impl<'a, T: bindings::detersl::kv_api::kv::Host> bindings::detersl::kv_api::kv::Host for Box<T> {
     fn get(&mut self, key: String) -> Option<Vec<u8>> {
-        (&mut **self).get(key)
+        T::get(self, key)
     }
 
     fn set(&mut self, key: String, value: Vec<u8>) {
-        (&mut **self).set(key, value)
+        T::set(self, key, value)
     }
 
     fn delete(&mut self, key: String) -> bool {
-        (&mut **self).delete(key)
+        T::delete(self, key)
     }
 }
 

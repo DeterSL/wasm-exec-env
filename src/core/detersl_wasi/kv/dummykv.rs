@@ -1,16 +1,15 @@
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
-use crate::core::bindings;
+use crate::core::{bindings, detersl_wasi::kv::KVType};
 
+#[derive(Clone, Default)]
 pub struct DummyKV {
-    inner: Mutex<std::collections::HashMap<String, Vec<u8>>>,
+    inner: Arc<Mutex<std::collections::HashMap<String, Vec<u8>>>>,
 }
-
-unsafe impl Send for DummyKV {}
 
 impl DummyKV {
     pub fn new() -> Self {
-        Self { inner: Mutex::new(Default::default()) }
+        Self { inner: Arc::new(Mutex::new(Default::default())) }
     }
 }
 
@@ -26,5 +25,6 @@ impl bindings::detersl::kv_api::kv::Host for DummyKV {
     fn delete(&mut self, key: String) -> bool {
         self.inner.lock().unwrap().remove(&key).is_some()
     }
-
 }
+
+impl KVType for DummyKV {}
