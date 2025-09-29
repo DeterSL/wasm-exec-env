@@ -1,11 +1,12 @@
 
 use std::{num::NonZeroUsize, path::PathBuf};
 
+use anyhow::Context;
 use lru::LruCache;
 use wasmtime::{component::{Component, Linker}, Engine};
 use wasmtime_wasi::p2::add_to_linker_sync;
 
-use crate::{config::FuncBinaryConfig, core::{bindings, detersl_wasi::http, engine::config::DeterSLEngineConfig, execution::ExecutionState, fetcher::{get_one_time_component_fetcher_for_source, ComponentFetcher, OneTimeFetcherFn}}};
+use crate::{config::FuncBinaryConfig, core::{bindings, detersl_linker::{AddKVToLinker, LinkerOption}, detersl_wasi::http, engine::config::DeterSLEngineConfig, execution::ExecutionState, fetcher::{get_one_time_component_fetcher_for_source, ComponentFetcher, OneTimeFetcherFn}}};
 
 pub struct DeterSLFuncInfo {
     pub func_hash: String,
@@ -41,6 +42,8 @@ impl DeterSLEngine {
         let mut linker = Linker::new(&engine);
         add_to_linker_sync(&mut linker)?;
         http::add_only_http_to_linker_async(&mut linker)?;
+        let mut kv_linker = AddKVToLinker::new();
+        kv_linker.apply_to_linker(&mut linker)?;
         Ok(Self {
             engine,
             instance_cache: LruCache::<String, bindings::DeterslApiPre<ExecutionState>>::new(NonZeroUsize::new(config.LRUCacheCapacity).unwrap()),
@@ -50,15 +53,20 @@ impl DeterSLEngine {
     }
 
     pub fn compile_component(&self, detersl_func: &DeterSLFuncInfo) -> anyhow::Result<Component> {
-        let component_path_buf = detersl_func.fetch()?;
-        let component = Component::from_file_with_hash(&self.engine, component_path_buf.as_path(), detersl_func.func_hash.clone())?;
+        let component_path_buf = detersl_func.fetch()
+            .context("failed to fetch the component")?;
+        let component = Component::from_file_with_hash(&self.engine, component_path_buf.as_path(), detersl_func.func_hash.clone())
+            .context("failed to load component from file")?;
         Ok(component)
     }
 
     pub fn compile_component_and_cache_pre_instance(&mut self, detersl_func: &DeterSLFuncInfo) -> anyhow::Result<bindings::DeterslApiPre<ExecutionState>> {
-        let component = self.compile_component(detersl_func)?;
-        let instance_pre = self.default_linker.instantiate_pre(&component)?;
-        let detersl_pre = bindings::DeterslApiPre::new(instance_pre)?;
+        let component = self.compile_component(detersl_func)
+            .context("failed to compile component")?;
+        let instance_pre = self.default_linker.instantiate_pre(&component)
+            .context("failed to make a pre instance from component")?;
+        let detersl_pre = bindings::DeterslApiPre::new(instance_pre)
+            .context("failed to make a detersl pre instance")?;
         let clone = detersl_pre.clone();
         self.instance_cache.put(detersl_func.func_hash.clone(), detersl_pre);
         Ok(clone)
@@ -70,7 +78,8 @@ impl DeterSLEngine {
                 Ok(instance.clone())
             },
             None => {
-                let instance = self.compile_component_and_cache_pre_instance(detersl_func)?;
+                let instance = self.compile_component_and_cache_pre_instance(detersl_func)
+                    .context("failed to compile and cache component")?;
                 Ok(instance)
             }
         }

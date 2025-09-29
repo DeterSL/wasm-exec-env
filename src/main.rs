@@ -4,6 +4,7 @@ mod config;
 use core::{*, worker::FuncJob};
 use std::{convert::Infallible, net::SocketAddr};
 
+use anyhow::anyhow;
 use bytes::Bytes;
 use http_body_util::BodyExt;
 use hyper::server::conn::http1;
@@ -58,7 +59,7 @@ async fn handle_request(
                         format!("failed to serialize output: {e}"),
                     )),
                 },
-                Ok(Err(err)) => Ok(resp(StatusCode::INTERNAL_SERVER_ERROR, err.to_string())),
+                Ok(Err(err)) => Ok(resp(StatusCode::INTERNAL_SERVER_ERROR, format!("{:#}", err))),
                 Err(_canceled) => Ok(resp(
                     StatusCode::INTERNAL_SERVER_ERROR,
                     "worker dropped".to_string(),
@@ -77,9 +78,10 @@ async fn main() -> anyhow::Result<()> {
     let (tx_router, rx_router) = mpsc::channel::<FuncJob>(1024);
 
     // Spawn a pool of workers: one per available core
-    let num_workers = std::thread::available_parallelism()
+    let mut num_workers = std::thread::available_parallelism()
         .map(|n| n.get())
         .unwrap_or(1);
+    num_workers = 1;
     log::info!("spawning {} workers", num_workers);
 
     // Each worker has its own bounded queue (capacity 1 means "free" == queue empty)
@@ -150,7 +152,7 @@ async fn route_jobs(
         while let Some(job) = rx_router.recv().await {
             let _ = job
                 .reply
-                .send(Err("no workers available".into()))
+                .send(Err(anyhow!("no workers available")))
                 .map_err(|_| ());
         }
         return;
@@ -181,7 +183,7 @@ async fn route_jobs(
                     if workers.is_empty() {
                         let _ = job
                             .reply
-                            .send(Err("all workers closed".into()))
+                            .send(Err(anyhow!("all workers closed")))
                             .map_err(|_| ());
                         continue 'route;
                     }

@@ -6,7 +6,7 @@ use wasmtime::Config;
 use crate::{config::FuncBinaryConfig, core::{detersl_wasi::kv::{DummyKV, KVType}, engine::{DeterSLEngine, DeterSLEngineConfig}, executioner::DeterSLExecutioner, types}};
 
 // Keep your error alias
-type WorkerError = Box<dyn std::error::Error + Send + Sync>;
+type WorkerError = anyhow::Error;
 
 pub struct FuncJob {
     pub config: FuncBinaryConfig,

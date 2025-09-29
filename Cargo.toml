@@ -29,3 +29,13 @@ async-trait = "0.1.89"
 futures = "0.3.31"
 reqwest = { version = "0.12.23", features = ["blocking", "rustls-tls", "json"] }
 chrono = "0.4.42"
+
+[profile.release]
+opt-level = 3          # maximum optimization for speed
+lto = "fat"            # best runtime perf (use "thin" for faster builds)
+codegen-units = 1      # better optimization across crate, slower compile
+panic = "abort"        # removes unwinding code
+debug = false          # no debug info
+debug-assertions = false
+overflow-checks = false
+incremental = false

@@ -1,5 +1,3 @@
-
-
 use wasmtime::component::{Linker, HasData};
 use wasmtime_wasi::p2::{add_clock_to_linker, WasiView, add_random_to_linker, add_cli_to_linker, add_io_to_linker, add_filesystem_to_linker, add_sockets_to_linker};
 
@@ -101,12 +99,11 @@ where T: WasiView  + 'static {
 }
 
 pub struct AddKVToLinker {
-    kv: Box<dyn KVType>
 }
 
 impl AddKVToLinker {
-    fn new(kv: Box<dyn KVType>) -> Box<Self> {
-        Box::new(Self { kv })
+    pub fn new() -> Box<Self> {
+        Box::new(Self { })
     } 
 }
 
@@ -173,10 +170,10 @@ where T: WasiView + 'static {
     opts
 }
 
-pub fn get_kv_as_opt<T>(kv: Box<dyn KVType>) -> Vec<Box<dyn LinkerOption<T>>>
+pub fn get_kv_as_opt<T>() -> Vec<Box<dyn LinkerOption<T>>>
 where T: KvView + WasiView + 'static{
     let mut opts = Vec::<Box<dyn LinkerOption<T>>>::new();
-    opts.push(AddKVToLinker::new(kv));
+    opts.push(AddKVToLinker::new());
     opts
 }
 
