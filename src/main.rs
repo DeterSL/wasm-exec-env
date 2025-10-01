@@ -74,17 +74,14 @@ async fn handle_request(
 async fn main() -> anyhow::Result<()> {
     env_logger::init();
 
-    // Channel from HTTP handlers to the router
     let (tx_router, rx_router) = mpsc::channel::<FuncJob>(1024);
 
-    // Spawn a pool of workers: one per available core
     let mut num_workers = std::thread::available_parallelism()
         .map(|n| n.get())
         .unwrap_or(1);
     num_workers = 1;
     log::info!("spawning {} workers", num_workers);
 
-    // Each worker has its own bounded queue (capacity 1 means "free" == queue empty)
     let mut worker_senders: Vec<mpsc::Sender<FuncJob>> = Vec::with_capacity(num_workers);
     let mut engine_cfg = Config::new();
     let cache = Cache::new(CacheConfig::new()).expect("cache");
@@ -101,7 +98,6 @@ async fn main() -> anyhow::Result<()> {
         std::thread::Builder::new()
             .name(format!("worker-{i}"))
             .spawn(move || {
-                // Build an engine Config per worker (local cache is fine)
                 
                 let mut worker = Worker::from_parts(detersl_engine_clone);
                 worker.run_forever(rx_w);
@@ -111,12 +107,10 @@ async fn main() -> anyhow::Result<()> {
         worker_senders.push(tx_w);
     }
 
-    // Spawn a router task that distributes jobs to free workers
     tokio::spawn(async move {
         route_jobs(rx_router, worker_senders).await;
     });
 
-    // Minimal Hyper 1.x server: accept loop + per-conn http1 server
     let addr: SocketAddr = "0.0.0.0:3000".parse().unwrap();
     let listener = tokio::net::TcpListener::bind(addr).await?;
     println!("Listening on http://{addr}");
@@ -139,8 +133,6 @@ async fn main() -> anyhow::Result<()> {
     }
 }
 
-// Simple router: try to send to a free worker (queue not full). If all are full,
-// fall back to round-robin with an awaited send on the next worker.
 async fn route_jobs(
     mut rx_router: mpsc::Receiver<FuncJob>,
     mut workers: Vec<mpsc::Sender<FuncJob>>,
@@ -161,7 +153,6 @@ async fn route_jobs(
     let mut next_idx: usize = 0;
 
     'route : while let Some(mut job) = rx_router.recv().await {
-        // First pass: non-blocking try_send to find an immediately free worker.
         let n = workers.len();
         let mut i = 0;
         while i < n {
@@ -172,12 +163,11 @@ async fn route_jobs(
                     continue 'route;
                 }
                 Err(TrySendError::Full(j)) => {
-                    job = j; // keep the job and try next worker
+                    job = j;
                     i += 1;
                     continue;
                 }
                 Err(TrySendError::Closed(j)) => {
-                    // Remove the closed worker and retry from same offset
                     job = j;
                     let _ = workers.remove(idx);
                     if workers.is_empty() {
@@ -187,9 +177,7 @@ async fn route_jobs(
                             .map_err(|_| ());
                         continue 'route;
                     }
-                    // Adjust indices after removal
                     next_idx %= workers.len();
-                    // Restart probing with updated length
                     i = 0;
                     continue;
                 }
@@ -200,14 +188,12 @@ async fn route_jobs(
             continue;
         }
 
-        // Fallback: await capacity on the next worker in round-robin
         let idx = next_idx % workers.len();
         match workers[idx].send(job).await {
             Ok(()) => {
                 next_idx = (idx + 1) % workers.len();
             }
             Err(_e) => {
-                // Worker closed; drop it and continue
                 let _ = workers.remove(idx);
                 if workers.is_empty() {
                     log::error!("all workers closed while routing");

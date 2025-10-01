@@ -2,6 +2,7 @@
 name = "deterSL_runtime"
 version = "0.1.0"
 edition = "2024"
+build = "build.rs"
 
 [dependencies]
 wasmtime = { git = "https://github.com/DeterSL/wasmtime.git", branch = "release-35.0.0-detersl", features = ["cache"] }
@@ -29,6 +30,7 @@ async-trait = "0.1.89"
 futures = "0.3.31"
 reqwest = { version = "0.12.23", features = ["blocking", "rustls-tls", "json"] }
 chrono = "0.4.42"
+cxx = "1.0.186"
 
 [profile.release]
 opt-level = 3          # maximum optimization for speed
@@ -39,3 +41,16 @@ debug = false          # no debug info
 debug-assertions = false
 overflow-checks = false
 incremental = false
+
+[build-dependencies]
+cxx-build = "1"
+
+[lib]
+crate-type = ["rlib", "staticlib"]
+name = "detersl"
+path = "src/lib.rs"
+
+[[bin]]
+# Your existing binary
+name = "detersl-server"
+path = "src/main.rs"

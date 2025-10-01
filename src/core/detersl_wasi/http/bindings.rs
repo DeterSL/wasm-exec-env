@@ -1,7 +1,7 @@
 mod genrated {
-    use crate::detersl_wasi::http::types;
-    use crate::detersl_wasi::http::body;
-    use crate::detersl_wasi::http::errors;
+    use crate::core::detersl_wasi::http::types;
+    use crate::core::detersl_wasi::http::body;
+    use crate::core::detersl_wasi::http::errors;
     
     wasmtime::component::bindgen!({
         path: "src/wit",

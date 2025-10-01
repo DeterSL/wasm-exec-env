@@ -1,6 +1,5 @@
 use crate::{config::FuncBinaryConfig, core::{detersl_wasi::kv::KVType, engine::{build_state, DefaultFuncInvocableBuilder, DeterSLEngine, DeterSLFuncInvocableBuilder}, types}};
 
-
 pub struct DeterSLExecutioner {
     engine: DeterSLEngine,
     invocable_builder: Option<Box<dyn DeterSLFuncInvocableBuilder>>,

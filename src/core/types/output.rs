@@ -1,4 +1,4 @@
-use crate::bindings::exports::detersl::api::func_handler;
+use crate::core::bindings::exports::detersl::api::func_handler;
 
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct Output {

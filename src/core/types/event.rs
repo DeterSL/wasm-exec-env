@@ -1,4 +1,4 @@
-use crate::{bindings::exports::detersl::api::func_handler, config::FuncInputEvent};
+use crate::{core::bindings::exports::detersl::api::func_handler, config::FuncInputEvent};
 
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct Event {
