@@ -25,7 +25,7 @@ endif()
 # Optional Rust flags (tune for your toolchain if you really need to override linker)
 set(RUST_FLAGS "")
 if (ENABLE_LTO)
-    set(RUST_FLAGS "-Clinker-plugin-lto -Clinker=clang -Clink-arg=-fuse-ld=lld-17")
+    set(RUST_FLAGS "-Clinker-plugin-lto -Clinker=clang -Clink-arg=-fuse-ld=gold")
 endif()
 
 # Names from Cargo.toml
