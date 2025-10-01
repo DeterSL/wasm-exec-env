@@ -14,7 +14,7 @@ mod ffi {
 
         fn new_executioner(engine: &DeterSLEngine, kv: Box<KvBox>) -> Result<Box<FfiExecutioner>>;
 
-        fn clone_kv(kv: Box<KvBox>) -> Box<KvBox>; 
+        fn clone_kv(kv: &Box<KvBox>) -> Box<KvBox>; 
 
         fn executioner_run_cfg(self: &mut FfiExecutioner, cfg: &FuncBinaryConfig) -> Result<String>;
 
@@ -67,7 +67,7 @@ fn new_dummy_kv() -> Box<KvBox> {
     Box::new(KvBox::new(Box::new(DummyKV::new())))
 }
 
-fn clone_kv(kv: Box<KvBox>) -> Box<KvBox> {
+fn clone_kv(kv: &Box<KvBox>) -> Box<KvBox> {
     Box::new(KvBox::new(kv.inner.clone()))
 }
 
@@ -78,9 +78,7 @@ pub struct FfiExecutioner {
 fn new_executioner(engine: &DeterSLEngine, kv: Box<KvBox>) -> Result<Box<FfiExecutioner>> {
     let exec_engine = engine.clone();
 
-    let kv_trait = kv.into_inner().clone();
-
-    let executioner = DeterSLExecutioner::new(exec_engine).with_kv(kv_trait);
+    let executioner = DeterSLExecutioner::new(exec_engine).with_kv(kv.into_inner());
 
     Ok(Box::new(FfiExecutioner {
         executioner

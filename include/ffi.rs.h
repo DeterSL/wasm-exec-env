@@ -396,7 +396,7 @@ private:
 
 ::rust::Box<::FfiExecutioner> new_executioner(::DeterSLEngine const &engine, ::rust::Box<::KvBox> kv);
 
-::rust::Box<::KvBox> clone_kv(::rust::Box<::KvBox> kv) noexcept;
+::rust::Box<::KvBox> clone_kv(::rust::Box<::KvBox> const &kv) noexcept;
 
 #ifdef __clang__
 #pragma clang diagnostic pop
