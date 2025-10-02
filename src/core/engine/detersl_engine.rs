@@ -75,10 +75,7 @@ impl DeterSLEngine {
     pub fn get_instance_from(&mut self, detersl_func: &DeterSLFuncInfo) -> anyhow::Result<bindings::DeterslApiPre<ExecutionState>> {
         match self.instance_cache.get(&detersl_func.func_hash) {
             Some(instance) => {
-                let instance = self.compile_component_and_cache_pre_instance(detersl_func)
-                    .context("failed to compile and cache component")?;
-                Ok(instance)
-                //Ok(instance.clone())
+                Ok(instance.clone())
             },
             None => {
                 let instance = self.compile_component_and_cache_pre_instance(detersl_func)
