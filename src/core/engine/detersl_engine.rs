@@ -55,10 +55,8 @@ impl DeterSLEngine {
     pub fn compile_component(&self, detersl_func: &DeterSLFuncInfo) -> anyhow::Result<Component> {
         let component_path_buf = detersl_func.fetch()
             .context("failed to fetch the component")?;
-        let component = Component::from_file(&self.engine, component_path_buf.as_path())
+        let component = Component::from_file_with_hash(&self.engine, component_path_buf.as_path(), detersl_func.func_hash.clone())
             .context("failed to load component from file")?;
-/*        let component = Component::from_file_with_hash(&self.engine, component_path_buf.as_path(), detersl_func.func_hash.clone())*/
-            /*.context("failed to load component from file")?;*/
         Ok(component)
     }
 
