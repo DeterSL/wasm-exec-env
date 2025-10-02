@@ -55,8 +55,10 @@ impl DeterSLEngine {
     pub fn compile_component(&self, detersl_func: &DeterSLFuncInfo) -> anyhow::Result<Component> {
         let component_path_buf = detersl_func.fetch()
             .context("failed to fetch the component")?;
-        let component = Component::from_file_with_hash(&self.engine, component_path_buf.as_path(), detersl_func.func_hash.clone())
+        let component = Component::from_file(&self.engine, component_path_buf.as_path())
             .context("failed to load component from file")?;
+/*        let component = Component::from_file_with_hash(&self.engine, component_path_buf.as_path(), detersl_func.func_hash.clone())*/
+            /*.context("failed to load component from file")?;*/
         Ok(component)
     }
 
@@ -75,7 +77,10 @@ impl DeterSLEngine {
     pub fn get_instance_from(&mut self, detersl_func: &DeterSLFuncInfo) -> anyhow::Result<bindings::DeterslApiPre<ExecutionState>> {
         match self.instance_cache.get(&detersl_func.func_hash) {
             Some(instance) => {
-                Ok(instance.clone())
+                let instance = self.compile_component_and_cache_pre_instance(detersl_func)
+                    .context("failed to compile and cache component")?;
+                Ok(instance)
+                //Ok(instance.clone())
             },
             None => {
                 let instance = self.compile_component_and_cache_pre_instance(detersl_func)
