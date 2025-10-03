@@ -1,6 +1,6 @@
 use super::{config_input::FuncInputEvent, config_execution_policy::FuncExecutionPolicy, config_link_opt::FuncLinkOpt, config_binary_location::FuncBinarySource, config_output::FuncOutputEvent, config_inital_values::FuncInitValue};
 
-#[derive(serde::Deserialize, Clone)]
+#[derive(sonic_rs::Deserialize, Clone)]
 pub struct FuncBinaryConfig {
     pub func_name: String,
     pub func_invocation_id: String,

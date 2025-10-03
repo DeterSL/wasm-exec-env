@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use sonic_rs::Deserialize;
 use wasmtime_wasi::p2::{ClockEvent, FSEvent, RndEvent, UDPEvent, TCPEvent, EnvEvent, ExitEvent};
 use std::any::{Any, TypeId};
 

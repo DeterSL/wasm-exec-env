@@ -3,6 +3,7 @@ project(detersl_ffi CXX)
 
 # Options
 option(ENABLE_LTO "Enable LTO flags for Rust (RUSTFLAGS)" OFF)
+option(ENABLE_NATIVE_CPU "Enable native CPU optimizations for Rust (-C target-cpu=native)" OFF)
 # Optional: pass Cargo feature(s) as a space-separated string (e.g. "foo bar")
 set(DETERSL_CARGO_FEATURES "" CACHE STRING "Cargo --features to enable for the Rust build")
 
@@ -26,6 +27,10 @@ endif()
 set(RUST_FLAGS "")
 if (ENABLE_LTO)
     set(RUST_FLAGS "-Clinker-plugin-lto -Clinker=clang -Clink-arg=-fuse-ld=gold")
+endif()
+
+if (ENABLE_NATIVE_CPU)
+    set(RUST_FLAGS "${RUST_FLAGS} -C target-cpu=native")
 endif()
 
 # Names from Cargo.toml

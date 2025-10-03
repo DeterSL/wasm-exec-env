@@ -31,7 +31,7 @@ use wasmtime::{Cache, CacheConfig, Config as WasmConfig, Engine as WasmEngine};
 use crate::{config::FuncBinaryConfig, core::{detersl_wasi::kv::{DummyKV, KVType}, engine::{DeterSLEngine, DeterSLEngineConfig}, executioner::DeterSLExecutioner}};
 
 fn func_config_from_json(json: &CxxString) -> Result<Box<FuncBinaryConfig>> {
-    let cfg: FuncBinaryConfig = serde_json::from_str(json.to_str()?)
+    let cfg: FuncBinaryConfig = sonic_rs::from_str(json.to_str()?)
         .with_context(|| "failed to parse FuncBinaryConfig JSON")?;
     Ok(Box::new(cfg))
 }

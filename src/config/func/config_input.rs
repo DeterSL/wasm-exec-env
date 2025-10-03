@@ -1,5 +1,5 @@
 
-#[derive(serde::Deserialize, Clone)]
+#[derive(sonic_rs::Deserialize, Clone)]
 #[serde(tag = "type", rename_all = "lowercase")]
 pub enum FuncInputEvent {
     Data {

@@ -6,7 +6,7 @@ use lru::LruCache;
 use wasmtime::{component::{Component, Linker}, Engine};
 use wasmtime_wasi::p2::add_to_linker_sync;
 
-use crate::{config::FuncBinaryConfig, core::{bindings, detersl_linker::{AddKVToLinker, LinkerOption}, detersl_wasi::http, engine::config::DeterSLEngineConfig, execution::ExecutionState, fetcher::{get_one_time_component_fetcher_for_source, ComponentFetcher, OneTimeFetcherFn}}};
+use crate::{config::FuncBinaryConfig, core::{bindings, detersl_linker::{AddKVToLinker, LinkerOption}, detersl_wasi::http, engine::config::DeterSLEngineConfig, execution::ExecutionState, fetcher::{get_one_time_component_fetcher_for_source, OneTimeFetcherFn}}};
 
 pub struct DeterSLFuncInfo {
     pub func_hash: String,
