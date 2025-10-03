@@ -37,17 +37,35 @@ impl DeterSLHttpView for ExecutionState {
 impl ExecutionState {
     pub fn new(kv: Box<dyn KVType>, execution_policy: &FuncExecutionPolicy, inital_values: &FuncInitValue) -> ExecutionState {
         let mut wasi = WasiCtxBuilder::new();
-        ExecutionState::apply_initial_values(&mut wasi, inital_values);
 
-        let mut event_filter = Box::new(EventHandlerImpl::new());
-        let filters = make_filters(execution_policy); 
-
-        for (td, filter_fn) in filters {
-            event_filter.register(td, filter_fn);
+        #[cfg(not(feature = "noop-logger"))]
+        {
+            wasi.set_logger(detersl_wasi::logger::SimpleLogger::new());
         }
 
-        wasi.set_event_handler(*event_filter);
-        
+        ExecutionState::apply_initial_values(&mut wasi, inital_values);
+
+        #[cfg(feature = "noop-filter")]
+        {
+            use wasmtime_wasi::p2::event_handler::NoopHandler;
+
+            let handler = NoopHandler{};
+            // set_event_handler accepts impl EventHandler + 'static
+            wasi.set_event_handler(handler);
+        }
+
+        #[cfg(not(feature = "noop-filter"))]
+        {
+            let mut event_filter = EventHandlerImpl::new();
+            let filters = make_filters(execution_policy);
+
+            for (td, filter_fn) in filters {
+                event_filter.register(td, filter_fn);
+            }
+
+            wasi.set_event_handler(event_filter);
+        }
+
         ExecutionState {
             ctx: wasi.build(),
             http_ctx: DeterSLHttpCtx::new(),
@@ -62,7 +80,6 @@ impl ExecutionState {
         wasi.insecure_random_seed(inital_values.random_seed);
         wasi.insecure_random(detersl_wasi::random::ConstantRng::new(inital_values.random_seed.try_into().unwrap()));
         wasi.secure_random(detersl_wasi::random::ConstantRng::new(inital_values.random_seed.try_into().unwrap()));
-        wasi.set_logger(detersl_wasi::logger::SimpleLogger::new());
     }
 }
 

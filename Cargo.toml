@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2024"
 build = "build.rs"
 
+[features]
+noop-logger = []
+noop-filter = []
+
 [dependencies]
 wasmtime = { git = "https://github.com/DeterSL/wasmtime.git", branch = "release-35.0.0-detersl", features = ["cache"] }
 wasmtime-wasi = { git = "https://github.com/DeterSL/wasmtime.git", branch = "release-35.0.0-detersl" }

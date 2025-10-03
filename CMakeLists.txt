@@ -23,6 +23,11 @@ else()
     set(TARGET_DIR "${TARGET_SUBDIR}")
 endif()
 
+if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug" AND "${DETERSL_CARGO_FEATURES}" STREQUAL "")
+    set(DETERSL_CARGO_FEATURES "noop-logger noop-filter" CACHE STRING "Cargo --features to enable for the Rust build" FORCE)
+endif()
+
+
 # Optional Rust flags (tune for your toolchain if you really need to override linker)
 set(RUST_FLAGS "")
 if (ENABLE_LTO)
