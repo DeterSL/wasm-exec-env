@@ -90,8 +90,17 @@ target_include_directories(detersl_ffi INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-# Linux-only linking
-target_link_libraries(detersl_ffi INTERFACE ${RUST_STATIC_LIB} pthread dl)
+if(APPLE)
+    find_library(SECURITY_FRAMEWORK Security)
+    find_library(COREFOUNDATION_FRAMEWORK CoreFoundation)
+    find_library(SYSTEMCONFIGURATION_FRAMEWORK SystemConfiguration)
+    find_library(FOUNDATION_FRAMEWORK Foundation)
+    target_link_libraries(detersl_ffi INTERFACE ${RUST_STATIC_LIB} ${SECURITY_FRAMEWORK} ${COREFOUNDATION_FRAMEWORK} ${SYSTEMCONFIGURATION_FRAMEWORK})
+elseif(UNIX)
+    target_link_libraries(detersl_ffi INTERFACE ${RUST_STATIC_LIB} pthread dl)
+else()
+    target_link_libraries(detersl_ffi INTERFACE ${RUST_STATIC_LIB})
+endif()
 
 # Optional nice alias for consumers
 add_library(detersl::ffi ALIAS detersl_ffi)
