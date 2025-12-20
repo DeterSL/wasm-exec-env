@@ -1,5 +1,5 @@
 [package]
-name = "deterSL_runtime"
+name = "wasm-exec-env"
 version = "0.1.0"
 edition = "2024"
 build = "build.rs"

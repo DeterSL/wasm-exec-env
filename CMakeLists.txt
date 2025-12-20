@@ -39,7 +39,7 @@ if (ENABLE_NATIVE_CPU)
 endif()
 
 # Names from Cargo.toml
-set(CARGO_PACKAGE deterSL_runtime)  # [package].name
+set(CARGO_PACKAGE wasm-exec-env)  # [package].name
 set(RUST_LIB_BASENAME detersl)      # [lib].name
 
 # Cargo command and optional --features
@@ -80,7 +80,7 @@ add_custom_target(detersl_rust ALL
 )
 
 # Provide an INTERFACE library your C++ code can link against
-# - Carries include dirs (so consumers can #include "<deterSL_runtime/src/ffi.rs.h>" and "rust/cxx.h")
+# - Carries include dirs (so consumers can #include "<wasm-exec-env/src/ffi.rs.h>" and "rust/cxx.h")
 # - Carries link to the Rust static lib and pthread/dl on Linux
 add_library(detersl_ffi INTERFACE)
 add_dependencies(detersl_ffi detersl_rust)
