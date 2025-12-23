@@ -1,5 +1,6 @@
 mod dummykv;
 mod kv_view;
+mod kvbox;
 
 use crate::core::bindings;
 
@@ -39,5 +40,4 @@ impl<'a, T: bindings::detersl::kv_api::kv::Host> bindings::detersl::kv_api::kv::
 
 pub use dummykv::DummyKV;
 pub use kv_view::KvView;
-
-
+pub use kvbox::KvBox;

@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use crate::core::{bindings, detersl_wasi::kv::KVType};
+use crate::{core::{bindings, detersl_wasi::kv::KVType}};
 
 #[derive(Clone, Default)]
 pub struct DummyKV {
