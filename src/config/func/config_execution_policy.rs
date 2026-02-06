@@ -4,9 +4,11 @@ use std::any::{Any, TypeId};
 
 use wasmtime::FilterFn;
 
+fn default_true() -> bool { true }
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct FuncExecutionPolicy {
-    #[serde(default)]
+    #[serde(default = "default_true")]
     pub allow_clocks: bool,
 
     // If allow_clocks == false, an optional `clocks` subpolicy can enable
@@ -14,7 +16,7 @@ pub struct FuncExecutionPolicy {
     #[serde(default)]
     pub clocks: Option<ClockPolicy>,
 
-    #[serde(default)]
+    #[serde(default = "default_true")]
     pub allow_filesystem: bool,
 
     // If allow_filesystem == false, an optional `filesystem` subpolicy can
@@ -22,13 +24,13 @@ pub struct FuncExecutionPolicy {
     #[serde(default)]
     pub filesystem: Option<FsPolicy>,
 
-    #[serde(default)]
+    #[serde(default = "default_true")]
     pub allow_random: bool,
 
-    #[serde(default)]
+    #[serde(default = "default_true")]
     pub allow_cli: bool,
 
-    #[serde(default)]
+    #[serde(default = "default_true")]
     pub allow_socket: bool,
 
     // If allow_socket == false, an optional `socket` subpolicy can enable
@@ -39,60 +41,78 @@ pub struct FuncExecutionPolicy {
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct ClockPolicy {
-    #[serde(default)]
+    #[serde(default = "default_true")]
     pub wall_clock: bool,
-    #[serde(default)]
+    
+    #[serde(default = "default_true")]
     pub monotonic_clock: bool,
 }
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct FsPolicy {
-    #[serde(default)]
+    #[serde(default = "default_true")]
     pub read_fs: bool,
-    #[serde(default)]
+    
+    #[serde(default = "default_true")]
     pub write_fs: bool,
-    #[serde(default)]
+    
+    #[serde(default = "default_true")]
     pub open_fs: bool,
-    #[serde(default)]
+    
+    #[serde(default = "default_true")]
     pub list_dir: bool,
-    #[serde(default)]
+    
+    #[serde(default = "default_true")]
     pub make_dir: bool,
-    #[serde(default)]
+    
+    #[serde(default = "default_true")]
     pub rm_dir: bool,
-    #[serde(default)]
+    
+    #[serde(default = "default_true")]
     pub read_dir: bool,
-    #[serde(default)]
+    
+    #[serde(default = "default_true")]
     pub rename_dir: bool,
+
     #[serde(default)]
     pub other_allowed: Vec<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct UdpPolicy {
-    #[serde(default)]
+    #[serde(default = "default_true")]
     pub receive: bool,
-    #[serde(default)]
+    
+    #[serde(default = "default_true")]
     pub send: bool,
-    #[serde(default)]
+    
+    #[serde(default = "default_true")]
     pub creation: bool,
+    
     #[serde(default)]
     pub options_allowed: Vec<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct TcpPolicy {
-    #[serde(default)]
+    #[serde(default = "default_true")]
     pub read: bool,
-    #[serde(default)]
+    
+    #[serde(default = "default_true")]
     pub write: bool,
-    #[serde(default)]
+
+    #[serde(default = "default_true")]
     pub connect: bool,
-    #[serde(default)]
+    
+    #[serde(default = "default_true")]
     pub listen: bool,
-    #[serde(default)]
+    
+    #[serde(default = "default_true")]
     pub accept: bool,
-    #[serde(default)]
+
+    #[serde(default = "default_true")]
     pub creation: bool,
+
     #[serde(default)]
     pub options_allowed: Vec<String>,
 }
@@ -174,7 +194,7 @@ pub fn make_random_filter(policy: &FuncExecutionPolicy) -> Option<FilterFn> {
     if !allow {
         return Some(Box::new(|_any: &dyn Any| { false }));
     }
-    
+
     Some(Box::new(move |any: &dyn Any| {
         any.downcast_ref::<RndEvent>().is_some()
     }))
@@ -185,7 +205,7 @@ pub fn make_cli_filter(policy: &FuncExecutionPolicy) -> Option<FilterFn> {
     if !allow {
         return Some(Box::new(|_any: &dyn Any| { false }));
     }
-    
+
     Some(Box::new(move |any: &dyn Any| {
         any.downcast_ref::<EnvEvent>().is_some() || any.downcast_ref::<ExitEvent>().is_some()
     }))
@@ -299,3 +319,4 @@ pub fn make_filters(policy: &FuncExecutionPolicy) -> Vec<(TypeId, FilterFn)> {
 
     out
 }
+
