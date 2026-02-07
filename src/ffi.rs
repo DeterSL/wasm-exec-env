@@ -28,6 +28,7 @@ mod ffi {
         fn new_executioner(engine: &DeterSLEngine, kv: Box<KvBox>) -> Result<Box<FfiExecutioner>>;
         fn executioner_run_cfg(self: &mut FfiExecutioner, cfg: &FuncBinaryConfig) -> Result<String>;
         fn executioner_run_json(self: &mut FfiExecutioner, json: &CxxString) -> Result<String>;
+        fn executioner_compile_json(self: &mut FfiExecutioner, json: &CxxString) -> Result<()>;
 
         // KV-side constructors
         fn new_dummy_kv() -> Box<KvBox>;
@@ -91,6 +92,13 @@ impl FfiExecutioner {
         let cfg: FuncBinaryConfig = serde_json::from_str(json.to_str()?)
             .with_context(|| "failed to parse FuncBinaryConfig JSON")?;
         self.executioner_run_cfg(&cfg)
+    }
+
+    fn executioner_compile_json(&mut self, json: &CxxString) -> Result<()> {
+        let cfg: FuncBinaryConfig = serde_json::from_str(json.to_str()?)
+            .with_context(|| "failed to parse FuncBinaryConfig JSON")?;
+        self.executioner.compile_func_with_config(cfg.clone())?;
+        Ok(())
     }
 }
 

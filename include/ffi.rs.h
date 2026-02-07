@@ -766,6 +766,7 @@ private:
 struct FfiExecutioner final : public ::rust::Opaque {
   ::rust::String executioner_run_cfg(::FuncBinaryConfig const &cfg);
   ::rust::String executioner_run_json(::std::string const &json);
+  void executioner_compile_json(::std::string const &json);
   ~FfiExecutioner() = delete;
 
 private:

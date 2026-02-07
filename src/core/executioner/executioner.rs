@@ -37,4 +37,13 @@ impl DeterSLExecutioner {
         let invocable = invocable_builder.build()?;
         invocable.invoke(config.func_input_event.into())
     }
+    
+    pub fn compile_func_with_config(&mut self, config: FuncBinaryConfig) -> anyhow::Result<()> {
+        let invocable_builder = self.invocable_builder
+            .as_mut()
+            .expect("invocable builder must be set (call with_kv first)");
+        invocable_builder.encode_func_config(&config);
+        invocable_builder.compile_func(&mut self.engine)?;
+        Ok(())
+    }
 }
