@@ -5,8 +5,4 @@ pub enum FuncInputEvent {
     Data {
         data: String
     },
-
-    KV {
-        key: String
-    }
 }

@@ -1,5 +1,5 @@
 use super::config::FuncBinaryConfig;
 
-pub trait FuncBinaryConfigParser {
+pub trait FuncBinaryConfigJsonParser {
     fn parse(&self) -> anyhow::Result<FuncBinaryConfig>;
 }
