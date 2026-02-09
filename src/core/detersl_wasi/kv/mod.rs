@@ -4,8 +4,6 @@ mod kvbox;
 
 use crate::core::bindings;
 
-pub type DynKVType = dyn bindings::detersl::kv_api::kv::Host;
-
 pub trait KVType: bindings::detersl::kv_api::kv::Host + KVTypeClone {}
 
 pub trait KVTypeClone {

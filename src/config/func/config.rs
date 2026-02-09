@@ -14,6 +14,7 @@ pub struct FuncBinaryConfig {
 }
 
 impl FuncBinaryConfig {
+    #[allow(dead_code)] // TODO: fix this later
     pub fn new(
         func_name: String, 
         func_invocation_id: String,

@@ -549,7 +549,9 @@ enum FinishMessage {
 pub enum StreamContext {
     /// The body is a request body.
     Request,
+
     /// The body is a response body.
+    #[allow(dead_code)] // TODO: fix this later
     Response,
 }
 

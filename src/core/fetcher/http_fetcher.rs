@@ -49,7 +49,7 @@ impl ComponentFetcher for HttpFetcher {
 
                 let tmp = std::env::temp_dir();
                 // A simple filename; callers can manage lifecycle of the temp file.
-                let filename = format!("funcbin_{}.bin", chrono::Utc::now().timestamp_nanos());
+                let filename = format!("funcbin_{}.bin", chrono::Utc::now().timestamp_nanos_opt().unwrap());
                 let dest = tmp.join(filename);
                 std::fs::write(&dest, &bytes)
                     .with_context(|| format!("failed to write downloaded binary to {:?}", dest))?;

@@ -10,6 +10,7 @@ where T: WasiView {
 
 pub struct AddClockToLinker{}
 impl AddClockToLinker {
+    #[allow(dead_code)] // TODO: fix later
     fn new() -> Box<Self> {
         Box::new(Self {  })
     }
@@ -25,6 +26,7 @@ where T: WasiView  + 'static{
 
 pub struct AddRandomToLinker{}
 impl AddRandomToLinker {
+    #[allow(dead_code)] // TODO: fix later
     fn new() -> Box<Self> {
         Box::new(Self {  })
     }
@@ -40,6 +42,7 @@ where T: WasiView  + 'static{
 
 pub struct AddCliToLinker{}
 impl AddCliToLinker {
+    #[allow(dead_code)] // TODO: fix later
     fn new() -> Box<Self> {
         Box::new(Self {  })
     }
@@ -55,6 +58,7 @@ where T: WasiView  + 'static{
 
 pub struct AddIOToLinker{}
 impl AddIOToLinker {
+    #[allow(dead_code)] // TODO: fix later
     fn new() -> Box<Self> {
         Box::new(Self {  })
     } 
@@ -70,6 +74,7 @@ where T: WasiView  + 'static{
 
 pub struct AddFSToLinker{}
 impl AddFSToLinker {
+    #[allow(dead_code)] // TODO: fix later
     fn new() -> Box<Self> {
         Box::new(Self {  })
     } 
@@ -85,6 +90,7 @@ where T: WasiView  + 'static{
 
 pub struct AddSocketsToLinker{}
 impl AddSocketsToLinker {
+    #[allow(dead_code)] // TODO: fix later
     fn new() -> Box<Self> {
         Box::new(Self {  })
     } 
@@ -126,6 +132,7 @@ pub struct AddHTTPToLinker {
 }
 
 impl AddHTTPToLinker {
+    #[allow(dead_code)] // TODO: fix later
    fn new() -> Box<Self> {
        Box::new(AddHTTPToLinker {  })
    }
@@ -139,6 +146,7 @@ where T: http::DeterSLHttpView +  WasiView  + KvView  + 'static {
 }
 
 
+#[allow(dead_code)] // TODO: fix later
 pub fn get_linker_opts_from_link_opt<T>(linker_opt: &FuncLinkOpt) -> Vec<Box<dyn LinkerOption<T>>>
 where T: WasiView + 'static {
     let mut opts = Vec::<Box<dyn LinkerOption<T>>>::new();
@@ -170,6 +178,7 @@ where T: WasiView + 'static {
     opts
 }
 
+#[allow(dead_code)] // TODO: fix later
 pub fn get_kv_as_opt<T>() -> Vec<Box<dyn LinkerOption<T>>>
 where T: KvView + WasiView + 'static{
     let mut opts = Vec::<Box<dyn LinkerOption<T>>>::new();
@@ -177,6 +186,7 @@ where T: KvView + WasiView + 'static{
     opts
 }
 
+#[allow(dead_code)] // TODO: fix later
 pub fn get_http_as_opt<T>() -> Vec<Box<dyn LinkerOption<T>>>
 where T: http::DeterSLHttpView + KvView + WasiView + 'static {
     let mut opts = Vec::<Box<dyn LinkerOption<T>>>::new();

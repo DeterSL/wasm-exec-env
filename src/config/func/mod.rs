@@ -1,5 +1,4 @@
 mod config;
-mod config_json_parser;
 mod config_input;
 mod config_link_opt;
 mod config_execution_policy;

@@ -5,12 +5,14 @@ use crate::config::FuncLinkOpt;
 
 use super::linker_opts::LinkerOption;
 
+#[allow(dead_code)] // TODO: fix later
 pub struct LinkerBuilder<T>
 where T: WasiView + 'static {
     linker: Linker<T>,
     opts: Vec<Box<dyn LinkerOption<T>>>
 }
 
+#[allow(dead_code)] // TODO: fix later
 impl<T> LinkerBuilder<T>
 where T: WasiView + 'static {
     pub fn new(linker: Linker<T>) -> Self {
@@ -30,6 +32,7 @@ where T: WasiView + 'static {
     }
 }
 
+#[allow(dead_code)] // TODO: fix later
 pub fn encode_linker_opt(linker_opt: &FuncLinkOpt) -> String {
     let mut encode_policy = String::new();
 

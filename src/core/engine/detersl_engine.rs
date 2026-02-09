@@ -1,4 +1,4 @@
-use std::{num::NonZeroUsize, path::PathBuf, sync::Arc, sync::OnceLock};
+use std::{path::PathBuf, sync::Arc, sync::OnceLock};
 
 use anyhow::Context;
 use moka::sync::Cache; // Import synchronous Moka cache
@@ -72,7 +72,7 @@ impl DeterSLEngine {
     /// Initializes the global cache capacity if this is the first engine being created.
     fn initialize_cache_capacity(config: &DeterSLEngineConfig) {
         CACHE_CAPACITY
-            .set(config.LRUCacheCapacity as u64)
+            .set(config.lrucache_capacity as u64)
             .ok(); // Ignore if already set
     }
 
