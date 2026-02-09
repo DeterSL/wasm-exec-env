@@ -41,7 +41,7 @@ mod ffi {
         type KVInterface;
 
         fn get(self: Pin<&mut KVInterface>, key: &str) -> &[u8];
-        fn set(self: Pin<&mut KVInterface>, key: &str, value: &[u8]);
+        fn set(self: Pin<&mut KVInterface>, key: &str, value: Vec<u8>);
         fn delete_key(self: Pin<&mut KVInterface>, key: &str) -> bool;
     }
 }
@@ -133,7 +133,8 @@ impl bindings::detersl::kv_api::kv::Host for CppKV {
     }
 
     fn set(&mut self, key: String, value: Vec<u8>) {
-        unsafe { Pin::new_unchecked(&mut *self.kv_interface).set(&key, &value) }
+        // Ownership transferred to C++; no copy!
+        unsafe { Pin::new_unchecked(&mut *self.kv_interface).set(&key, value) }
     }
 
     fn delete(&mut self, key: String) -> bool {
