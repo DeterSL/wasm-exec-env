@@ -21,6 +21,7 @@ pub struct Worker {
 impl Worker {
     // Build a worker with a fresh DeterSLEngine and a default DummyKV backend.
     // You can add overloads to inject a custom KV or custom engine if needed.
+    #[allow(dead_code)]
     pub fn new(engine_config: Config, detersl_engine_config: DeterSLEngineConfig) -> Self {
         let engine = wasmtime::Engine::new(&engine_config).expect("engine");
         let detersl_engine = DeterSLEngine::new(engine, detersl_engine_config).expect("couldnt made the engine");

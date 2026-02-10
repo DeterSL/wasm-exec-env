@@ -6,6 +6,8 @@ pub struct DeterSLWallClock {
 }
 
 impl DeterSLWallClock {
+
+    #[allow(dead_code)]
     pub fn new(initial: Duration) -> Self {
         Self { initial }
     }
@@ -13,9 +15,13 @@ impl DeterSLWallClock {
     pub fn from_nanos(initial_nanos: u64) -> Self {
         Self { initial: Duration::from_nanos(initial_nanos) }
     }
+
+    #[allow(dead_code)]
     pub fn from_millis(initial_millis: u64) -> Self {
         Self { initial: Duration::from_millis(initial_millis) }
     }
+
+    #[allow(dead_code)]
     pub fn from_secs(initial_secs: u64) -> Self {
         Self { initial: Duration::from_secs(initial_secs) }
     }
