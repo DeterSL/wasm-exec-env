@@ -18,6 +18,7 @@ impl FuncBinaryConfigParser for FuncBinaryConfigJsonParser {
         Ok(parsed)
     }
 
+    #[allow(dead_code)]
     fn parse_from_file_path(&self, path: String) -> anyhow::Result<FuncBinaryConfig> {
         let mut file = File::open(&path)?;
         let mut contents = String::new();

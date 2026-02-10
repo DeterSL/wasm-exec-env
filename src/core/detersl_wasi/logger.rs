@@ -12,6 +12,6 @@ impl SimpleLogger {
 
 impl Logger for SimpleLogger {
     fn log(&mut self, _log_level: wasmtime_wasi::p2::LogLevel, log: String) {
-        println!("Got syscall: {}", log);
+        println!("Got host function call: {}", log);
     }
 }

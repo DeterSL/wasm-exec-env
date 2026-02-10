@@ -8,7 +8,7 @@ impl DeterSLEngineConfig {
         Self { lrucache_capacity: 10 }
     }
 
-    #[allow(dead_code)] // TODO: fix this
+    #[allow(dead_code)]
     pub fn with_cache_capacity(mut self, cache_capacity: usize) -> Self {
         self.lrucache_capacity = cache_capacity;
         self

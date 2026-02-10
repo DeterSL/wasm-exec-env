@@ -1,5 +1,6 @@
 mod func;
 
+#[allow(unused_imports)]
 pub use func::{
     FuncBinaryConfig,
     FuncExecutionPolicy,
@@ -7,6 +8,8 @@ pub use func::{
     FuncBinarySource,
     FuncInitValue,
     FuncInputEvent,
+    FuncBinaryConfigParser,
+    FuncBinaryConfigJsonParser,
 
     make_filters
 };
