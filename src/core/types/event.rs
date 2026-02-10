@@ -17,9 +17,6 @@ impl From<FuncInputEvent> for Event {
            FuncInputEvent::Data { data } => {
                 Self { data }
            }
-           FuncInputEvent::KV { key: _key } => {
-               panic!("not implemented!");
-           }
         }
     }
 }

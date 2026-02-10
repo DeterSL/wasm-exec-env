@@ -1,7 +1,7 @@
 mod core;
 mod config;
 
-use core::{*, worker::FuncJob};
+use core::{worker::FuncJob};
 use std::{convert::Infallible, net::SocketAddr};
 
 use anyhow::anyhow;
@@ -76,10 +76,10 @@ async fn main() -> anyhow::Result<()> {
 
     let (tx_router, rx_router) = mpsc::channel::<FuncJob>(1024);
 
-    let mut num_workers = std::thread::available_parallelism()
+    let num_workers = std::thread::available_parallelism()
         .map(|n| n.get())
         .unwrap_or(1);
-    num_workers = 1;
+    // num_workers = 1;
     log::info!("spawning {} workers", num_workers);
 
     let mut worker_senders: Vec<mpsc::Sender<FuncJob>> = Vec::with_capacity(num_workers);

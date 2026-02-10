@@ -36,7 +36,7 @@ where
             },
         });
 
-        let (use_tls, scheme) = match req.scheme.unwrap_or(Scheme::Https) {
+        let (_use_tls, scheme) = match req.scheme.unwrap_or(Scheme::Https) {
             Scheme::Http => (false, http::uri::Scheme::HTTP),
             Scheme::Https => (true, http::uri::Scheme::HTTPS),
 

@@ -1,4 +1,4 @@
-use std::{num::NonZeroUsize, path::PathBuf, sync::Arc, sync::OnceLock};
+use std::{path::PathBuf, sync::Arc, sync::OnceLock};
 
 use anyhow::Context;
 use moka::sync::Cache; // Import synchronous Moka cache
@@ -38,7 +38,6 @@ static GLOBAL_SHARED_CACHE: Lazy<Arc<Cache<String, bindings::DeterslApiPre<Execu
 /// Function metadata for fetching and managing compilation
 pub struct DeterSLFuncInfo {
     pub func_hash: String,
-    pub func_name: String,
     pub func_fetcher: OneTimeFetcherFn,
 }
 
@@ -48,7 +47,6 @@ impl DeterSLFuncInfo {
         let component_fetcher =
             get_one_time_component_fetcher_for_source(&config.func_binary_source)?;
         Ok(Self {
-            func_name: config.func_name,
             func_hash: config.func_binary_hash,
             func_fetcher: component_fetcher,
         })
@@ -72,7 +70,7 @@ impl DeterSLEngine {
     /// Initializes the global cache capacity if this is the first engine being created.
     fn initialize_cache_capacity(config: &DeterSLEngineConfig) {
         CACHE_CAPACITY
-            .set(config.LRUCacheCapacity as u64)
+            .set(config.lrucache_capacity as u64)
             .ok(); // Ignore if already set
     }
 

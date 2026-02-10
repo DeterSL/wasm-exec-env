@@ -12,6 +12,7 @@ pub trait DeterSLFuncInvocableBuilder {
 
     fn build(&mut self) -> anyhow::Result<DeterSLFuncInvocable>;
 
+    #[allow(dead_code)]
     fn reset(&mut self) -> anyhow::Result<()>;
 }
 

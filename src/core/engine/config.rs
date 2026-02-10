@@ -1,15 +1,16 @@
 #[derive(Clone)]
 pub struct DeterSLEngineConfig {
-    pub LRUCacheCapacity: usize
+    pub lrucache_capacity: usize
 }
 
 impl DeterSLEngineConfig {
     pub fn default() -> Self {
-        Self { LRUCacheCapacity: 10 }
+        Self { lrucache_capacity: 10 }
     }
 
+    #[allow(dead_code)]
     pub fn with_cache_capacity(mut self, cache_capacity: usize) -> Self {
-        self.LRUCacheCapacity = cache_capacity;
+        self.lrucache_capacity = cache_capacity;
         self
     }
 }
