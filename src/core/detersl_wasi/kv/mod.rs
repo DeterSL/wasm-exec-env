@@ -4,8 +4,6 @@ mod kvbox;
 
 use crate::core::bindings;
 
-pub type DynKVType = dyn bindings::detersl::kv_api::kv::Host;
-
 pub trait KVType: bindings::detersl::kv_api::kv::Host + KVTypeClone {}
 
 pub trait KVTypeClone {
@@ -40,4 +38,6 @@ impl<'a, T: bindings::detersl::kv_api::kv::Host> bindings::detersl::kv_api::kv::
 
 pub use dummykv::DummyKV;
 pub use kv_view::KvView;
+
+#[allow(unused_imports)]
 pub use kvbox::KvBox;

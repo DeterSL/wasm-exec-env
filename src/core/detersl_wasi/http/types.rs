@@ -194,7 +194,7 @@ pub async fn default_send_request_handler(
             }
         })?;
 
-    let (mut sender, worker) = {
+    let (mut sender, _worker) = {
         let tcp_stream = TokioIo::new(tcp_stream);
         let (sender, conn) = timeout(
             CONNECT_TIMEOUT,
@@ -209,7 +209,7 @@ pub async fn default_send_request_handler(
             match conn.await {
                 Ok(()) => {}
                 // TODO: same as above, shouldn't throw this error away.
-                Err(e) => println!("Oh!"),
+                Err(_e) => println!("Oh!"),
             }
         });
 
@@ -379,6 +379,7 @@ impl HostFutureIncomingResponse {
     }
 
     /// Returns `true` if the response is ready.
+    #[allow(dead_code)] // TODO: fix later
     pub fn is_ready(&self) -> bool {
         matches!(self, Self::Ready(_))
     }

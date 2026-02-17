@@ -300,7 +300,7 @@ pub fn make_filters(policy: &FuncExecutionPolicy) -> Vec<(TypeId, FilterFn)> {
         out.push((TypeId::of::<RndEvent>(), f));
     }
 
-    if let Some(f) = make_cli_filter(policy) {
+    if let Some(_f) = make_cli_filter(policy) {
         let f_env = {
             let allow = policy.allow_cli;
             Box::new(move |any: &dyn Any| any.downcast_ref::<EnvEvent>().map_or(false, |_| allow))

@@ -22,6 +22,7 @@ impl HttpError {
     }
 
     /// Downcast this error to a reference to an [`ErrorCode`]
+    #[allow(dead_code)] // TODO: fix this later
     pub fn downcast_ref(&self) -> Option<&ErrorCode> {
         self.err.downcast_ref()
     }
@@ -86,6 +87,7 @@ pub fn hyper_request_error(err: hyper::Error) -> ErrorCode {
 }
 
 /// Translate a [`hyper::Error`] to a wasi-http `ErrorCode` in the context of a response.
+#[allow(dead_code)] // TODO: fix this later
 pub fn hyper_response_error(err: hyper::Error) -> ErrorCode {
     if err.is_timeout() {
         return ErrorCode::HttpResponseTimeout;

@@ -1,11 +1,10 @@
 use anyhow::{Context, Result};
 use cxx::CxxString;
-use serde_json;
 use std::pin::Pin;
 use wasmtime::{Cache, CacheConfig, Config as WasmConfig, Engine as WasmEngine};
 
 use crate::{
-    config::FuncBinaryConfig,
+    config::{FuncBinaryConfig, FuncBinaryConfigJsonParser, FuncBinaryConfigParser},
     core::{
         bindings,
         detersl_wasi::kv::{DummyKV, KVType, KVTypeClone, KvBox},
@@ -41,7 +40,7 @@ mod ffi {
         type KVInterface;
 
         fn get(self: Pin<&mut KVInterface>, key: &str) -> &[u8];
-        fn set(self: Pin<&mut KVInterface>, key: &str, value: &[u8]);
+        fn set(self: Pin<&mut KVInterface>, key: &str, value: Vec<u8>);
         fn delete_key(self: Pin<&mut KVInterface>, key: &str) -> bool;
     }
 }
@@ -70,12 +69,14 @@ fn new_detersl_engine(cache_capacity: usize) -> Result<Box<DeterSLEngine>> {
 
 pub struct FfiExecutioner {
     pub executioner: DeterSLExecutioner,
+    pub config_parser: Box<dyn FuncBinaryConfigParser>
 }
 
 fn new_executioner(engine: &DeterSLEngine, kv: Box<KvBox>) -> Result<Box<FfiExecutioner>> {
     let exec_engine = engine.clone();
     let executioner = DeterSLExecutioner::new(exec_engine).with_kv(kv.into_inner());
-    Ok(Box::new(FfiExecutioner { executioner }))
+    let config_parser = Box::new(FuncBinaryConfigJsonParser::new());
+    Ok(Box::new(FfiExecutioner { executioner, config_parser }))
 }
 
 impl FfiExecutioner {
@@ -84,18 +85,17 @@ impl FfiExecutioner {
             .executioner
             .run_func_with_config(cfg.clone())
             .context("invoke failed")?;
-        let json = serde_json::to_string(&output).context("serialize output failed")?;
-        Ok(json)
+        output.to_json()
     }
 
     fn executioner_run_json(&mut self, json: &CxxString) -> Result<String> {
-        let cfg: FuncBinaryConfig = serde_json::from_str(json.to_str()?)
+        let cfg = self.config_parser.parse_from_str(json.to_string())
             .with_context(|| "failed to parse FuncBinaryConfig JSON")?;
         self.executioner_run_cfg(&cfg)
     }
 
     fn executioner_compile_json(&mut self, json: &CxxString) -> Result<()> {
-        let cfg: FuncBinaryConfig = serde_json::from_str(json.to_str()?)
+        let cfg = self.config_parser.parse_from_str(json.to_string())
             .with_context(|| "failed to parse FuncBinaryConfig JSON")?;
         self.executioner.compile_func_with_config(cfg.clone())?;
         Ok(())
@@ -133,7 +133,8 @@ impl bindings::detersl::kv_api::kv::Host for CppKV {
     }
 
     fn set(&mut self, key: String, value: Vec<u8>) {
-        unsafe { Pin::new_unchecked(&mut *self.kv_interface).set(&key, &value) }
+        // Ownership transferred to C++; no copy!
+        unsafe { Pin::new_unchecked(&mut *self.kv_interface).set(&key, value) }
     }
 
     fn delete(&mut self, key: String) -> bool {

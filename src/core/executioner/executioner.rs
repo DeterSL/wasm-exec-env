@@ -38,6 +38,7 @@ impl DeterSLExecutioner {
         invocable.invoke(config.func_input_event.into())
     }
     
+    #[allow(dead_code)] // This funciton is used in ffi
     pub fn compile_func_with_config(&mut self, config: FuncBinaryConfig) -> anyhow::Result<()> {
         let invocable_builder = self.invocable_builder
             .as_mut()
