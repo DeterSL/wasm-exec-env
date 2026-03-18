@@ -4,7 +4,7 @@ use std::pin::Pin;
 use wasmtime::{Cache, CacheConfig, Config as WasmConfig, Engine as WasmEngine, InstanceAllocationStrategy, PoolingAllocationConfig, Strategy};
 
 use crate::{
-    config::{FuncBinaryConfig, FuncBinaryConfigJsonParser, FuncBinaryConfigParser},
+    config::{self, FuncBinaryConfig, FuncBinaryConfigJsonParser, FuncBinaryConfigParser},
     core::{
         bindings,
         detersl_wasi::kv::{DummyKV, KVType, KVTypeClone, KvBox},
@@ -23,7 +23,7 @@ mod ffi {
         type FfiExecutioner;
 
         fn func_config_from_json(json: &CxxString) -> Result<Box<FuncBinaryConfig>>;
-        fn new_detersl_engine(cache_capacity: usize) -> Result<Box<DeterSLEngine>>;
+        fn new_detersl_engine(config_path: &CxxString) -> Result<Box<DeterSLEngine>>;
         fn new_executioner(engine: &DeterSLEngine, kv: Box<KvBox>) -> Result<Box<FfiExecutioner>>;
         fn executioner_run_cfg(self: &mut FfiExecutioner, cfg: &FuncBinaryConfig) -> Result<String>;
         fn executioner_run_json(self: &mut FfiExecutioner, json: &CxxString) -> Result<String>;
@@ -53,39 +53,9 @@ fn func_config_from_json(json: &CxxString) -> Result<Box<FuncBinaryConfig>> {
     Ok(Box::new(cfg))
 }
 
-fn new_detersl_engine(cache_capacity: usize) -> Result<Box<DeterSLEngine>> {
-    let mut engine_cfg = WasmConfig::new();
-    let cache = Cache::new(CacheConfig::new()).context("failed to create Wasmtime cache")?;
-    engine_cfg.cache(Some(cache));
-    let mut pool = PoolingAllocationConfig::new();
-    pool.total_memories(128);
-    pool.max_memory_size(256 * 1024 * 1024); // 2 GiB
-    pool.total_tables(128);
-    pool.table_elements(7000);
-    pool.total_core_instances(16 * 16);
-    //pool.linear_memory_keep_resident(1 * 1024 * 1024);
-    //pool.linear_memory_keep_resident(32 * 256 * 1024 * 1024);
-    pool.table_keep_resident(2 * 1024 * 1024);
-    //pool.decommit_batch_size(32);
-    //pool.
-
-    //pool.max_unused_warm_slots(200);
-    
-    engine_cfg.allocation_strategy(InstanceAllocationStrategy::Pooling(pool));
-
-    // Enable copy-on-write heap images.
-     engine_cfg.memory_init_cow(true);
-     //engine_cfg.memory_guard_size(0);
-    //engine_cfg.memory_reservation(0);
-
-    let wasmtime_engine =
-        WasmEngine::new(&engine_cfg).context("failed to create Wasmtime Engine")?;
-
-    let det_cfg = DeterSLEngineConfig::default().with_cache_capacity(cache_capacity);
-    let det_engine = DeterSLEngine::new(wasmtime_engine, det_cfg)
-        .context("failed to create DeterSLEngine")?;
-
-    Ok(Box::new(det_engine))
+fn new_detersl_engine(config_path: &CxxString) -> Result<Box<DeterSLEngine>> {
+    let engine = config::engine::engine_config::new_detersl_engine_from_config_path(config_path.to_str()?)?;
+    Ok(Box::new(engine))
 }
 
 pub struct FfiExecutioner {
