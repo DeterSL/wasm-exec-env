@@ -1,5 +1,6 @@
 use anyhow::anyhow;
 use wasmtime::Store;
+use std::time::Instant;
 
 use crate::{core::{bindings, engine::detersl_engine::{DeterSLEngine}, execution::ExecutionState, types}};
 
@@ -35,15 +36,12 @@ impl DeterSLFuncInvocable {
         }
     }
 
-    pub fn invoke(self, input: types::Event) -> anyhow::Result<types::Output> {
-        match self.instance {
-            Some(instance) => {
-                let output = instance.detersl_api_func_handler().call_handle(self.store.unwrap(), &input.into_binding())?;
-                Ok(types::Output::from(output))
-            }
-            None => {
-                Err(anyhow!("there isnt any instance"))
-            }
-        }
+    pub fn invoke(&mut self, input: types::Event) -> anyhow::Result<types::Output> {
+	    let instance = self.instance.as_ref().ok_or_else(|| anyhow!("there isnt any instance"))?;
+	    let store = self.store.as_mut().ok_or_else(|| anyhow!("there isnt any store"))?;
+	    let output = instance
+		    .detersl_api_func_handler()
+		    .call_handle(store, &input.into_binding())?;
+	    Ok(types::Output::from(output))
     }
 }
