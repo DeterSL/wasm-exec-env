@@ -6,6 +6,10 @@ pub struct FuncBinaryConfig {
     pub func_name: String,
     pub func_invocation_id: String,
     pub func_binary_hash: String,
+
+    #[serde(default)]
+    pub fast_execution: bool,
+    
     pub func_binary_source: FuncBinarySource,
     pub func_input_event: FuncInputEvent,
     pub func_output_event: FuncOutputEvent,

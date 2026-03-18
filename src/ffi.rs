@@ -1,10 +1,10 @@
 use anyhow::{Context, Result};
 use cxx::CxxString;
 use std::pin::Pin;
-use wasmtime::{Cache, CacheConfig, Config as WasmConfig, Engine as WasmEngine};
+use wasmtime::{Cache, CacheConfig, Config as WasmConfig, Engine as WasmEngine, InstanceAllocationStrategy, PoolingAllocationConfig, Strategy};
 
 use crate::{
-    config::{FuncBinaryConfig, FuncBinaryConfigJsonParser, FuncBinaryConfigParser},
+    config::{self, FuncBinaryConfig, FuncBinaryConfigJsonParser, FuncBinaryConfigParser},
     core::{
         bindings,
         detersl_wasi::kv::{DummyKV, KVType, KVTypeClone, KvBox},
@@ -23,7 +23,7 @@ mod ffi {
         type FfiExecutioner;
 
         fn func_config_from_json(json: &CxxString) -> Result<Box<FuncBinaryConfig>>;
-        fn new_detersl_engine(cache_capacity: usize) -> Result<Box<DeterSLEngine>>;
+        fn new_detersl_engine(config_path: &CxxString) -> Result<Box<DeterSLEngine>>;
         fn new_executioner(engine: &DeterSLEngine, kv: Box<KvBox>) -> Result<Box<FfiExecutioner>>;
         fn executioner_run_cfg(self: &mut FfiExecutioner, cfg: &FuncBinaryConfig) -> Result<String>;
         fn executioner_run_json(self: &mut FfiExecutioner, json: &CxxString) -> Result<String>;
@@ -53,18 +53,9 @@ fn func_config_from_json(json: &CxxString) -> Result<Box<FuncBinaryConfig>> {
     Ok(Box::new(cfg))
 }
 
-fn new_detersl_engine(cache_capacity: usize) -> Result<Box<DeterSLEngine>> {
-    let mut engine_cfg = WasmConfig::new();
-    let cache = Cache::new(CacheConfig::new()).context("failed to create Wasmtime cache")?;
-    engine_cfg.cache(Some(cache));
-    let wasmtime_engine =
-        WasmEngine::new(&engine_cfg).context("failed to create Wasmtime Engine")?;
-
-    let det_cfg = DeterSLEngineConfig::default().with_cache_capacity(cache_capacity);
-    let det_engine = DeterSLEngine::new(wasmtime_engine, det_cfg)
-        .context("failed to create DeterSLEngine")?;
-
-    Ok(Box::new(det_engine))
+fn new_detersl_engine(config_path: &CxxString) -> Result<Box<DeterSLEngine>> {
+    let engine = config::engine::engine_config::new_detersl_engine_from_config_path(config_path.to_str()?)?;
+    Ok(Box::new(engine))
 }
 
 pub struct FfiExecutioner {
@@ -81,10 +72,17 @@ fn new_executioner(engine: &DeterSLEngine, kv: Box<KvBox>) -> Result<Box<FfiExec
 
 impl FfiExecutioner {
     fn executioner_run_cfg(&mut self, cfg: &FuncBinaryConfig) -> Result<String> {
-        let output = self
-            .executioner
-            .run_func_with_config(cfg.clone())
-            .context("invoke failed")?;
+        let output = match self
+        .executioner
+        .run_func_with_config(cfg.clone())
+        .context("invoke failed")
+    {
+        Ok(out) => out,
+        Err(err) => {
+            eprintln!("executioner_run_cfg failed:\n{:#}", err);
+            return Err(err);
+        }
+    };
         output.to_json()
     }
 
