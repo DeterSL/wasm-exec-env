@@ -1,7 +1,23 @@
-use anyhow::Context;
+use std::{num::NonZeroUsize};
 
-use crate::{config::FuncBinaryConfig, core::{bindings, detersl_wasi::kv::KVType, engine::{detersl_engine::{DeterSLEngine, DeterSLFuncInfo}, invocable::DeterSLFuncInvocable}, execution::ExecutionState}};
+use anyhow::{anyhow, Context};
+use lru::LruCache;
 
+use crate::{
+    config::FuncBinaryConfig,
+    core::{
+        bindings,
+        detersl_wasi::kv::KVType,
+        engine::{
+            detersl_engine::{DeterSLEngine, DeterSLFuncInfo},
+            invocable::DeterSLFuncInvocable,
+        },
+        execution::ExecutionState,
+        types,
+    },
+};
+
+const FAST_INVOCABLE_CACHE_CAPACITY: usize = 32;
 
 pub trait DeterSLFuncInvocableBuilder {
     fn encode_func_config(&mut self, func_config: &FuncBinaryConfig);
@@ -12,6 +28,8 @@ pub trait DeterSLFuncInvocableBuilder {
 
     fn build(&mut self) -> anyhow::Result<DeterSLFuncInvocable>;
 
+    fn invoke_cached(&mut self, input: types::Event) -> anyhow::Result<types::Output>;
+
     #[allow(dead_code)]
     fn reset(&mut self) -> anyhow::Result<()>;
 }
@@ -21,8 +39,11 @@ pub struct DefaultFuncInvocableBuilder {
     info: Option<DeterSLFuncInfo>,
     pre: Option<bindings::DeterslApiPre<ExecutionState>>,
     invocable: Option<DeterSLFuncInvocable>,
-    make_state: Option<Box<dyn Fn(&FuncBinaryConfig, Box<dyn KVType>) -> anyhow::Result<ExecutionState> + 'static>>,
-    kv: Option<Box<dyn KVType>>
+    make_state: Option<
+        Box<dyn Fn(&FuncBinaryConfig, Box<dyn KVType>) -> anyhow::Result<ExecutionState> + 'static>,
+    >,
+    kv: Option<Box<dyn KVType>>,
+    invocable_cache: LruCache<String, DeterSLFuncInvocable>,
 }
 
 impl DefaultFuncInvocableBuilder {
@@ -33,7 +54,10 @@ impl DefaultFuncInvocableBuilder {
             pre: None,
             invocable: None,
             make_state: None,
-            kv: None
+            kv: None,
+            invocable_cache: LruCache::new(
+                NonZeroUsize::new(FAST_INVOCABLE_CACHE_CAPACITY).unwrap(),
+            ),
         }
     }
 
@@ -44,10 +68,17 @@ impl DefaultFuncInvocableBuilder {
 
     pub fn with_state_builder<F>(mut self, f: F) -> Self
     where
-        F: Fn(&FuncBinaryConfig, Box<dyn KVType>) -> anyhow::Result<ExecutionState> + 'static
+        F: Fn(&FuncBinaryConfig, Box<dyn KVType>) -> anyhow::Result<ExecutionState> + 'static,
     {
         self.make_state = Some(Box::new(f));
         self
+    }
+
+    fn cache_key(cfg: &FuncBinaryConfig, _info: &DeterSLFuncInfo) -> String {
+        // If you have a real config hash in another branch, use that here instead.
+        // Using only func_binary_hash is safe only if fast_execution is enabled
+        // for configs that differ only by input.
+        cfg.func_binary_hash.clone()
     }
 
     pub fn clear(&mut self) {
@@ -56,10 +87,22 @@ impl DefaultFuncInvocableBuilder {
         self.pre = None;
         self.invocable = None;
     }
+
+    #[allow(dead_code)]
+    pub fn clear_cache(&mut self) {
+        self.invocable_cache.clear();
+    }
 }
 
-pub fn build_state(func_config: &FuncBinaryConfig, kv: Box<dyn KVType>) -> anyhow::Result<ExecutionState> {
-    Ok(ExecutionState::new(kv, &func_config.func_execution_policy, &func_config.func_initial_values))
+pub fn build_state(
+    func_config: &FuncBinaryConfig,
+    kv: Box<dyn KVType>,
+) -> anyhow::Result<ExecutionState> {
+    Ok(ExecutionState::new(
+        kv,
+        &func_config.func_execution_policy,
+        &func_config.func_initial_values,
+    ))
 }
 
 impl DeterSLFuncInvocableBuilder for DefaultFuncInvocableBuilder {
@@ -92,6 +135,20 @@ impl DeterSLFuncInvocableBuilder for DefaultFuncInvocableBuilder {
             .as_ref()
             .context("call encode_func_config() first (no config present)")?;
 
+        if cfg.fast_execution {
+            let info = self
+                .info
+                .as_ref()
+                .context("call encode_func_config() first (no func info present)")?;
+
+            let key = Self::cache_key(cfg, info);
+
+            if let Some(cached) = self.invocable_cache.pop(&key) {
+                self.invocable = Some(cached);
+                return Ok(());
+            }
+        }
+
         let pre = self
             .pre
             .as_ref()
@@ -123,6 +180,38 @@ impl DeterSLFuncInvocableBuilder for DefaultFuncInvocableBuilder {
         self.invocable
             .take()
             .context("no invocable built; call make_instance() first")
+    }
+
+    fn invoke_cached(&mut self, input: types::Event) -> anyhow::Result<types::Output> {
+        let cfg = self
+            .cfg
+            .as_ref()
+            .context("call encode_func_config() first (no config present)")?;
+
+        if !cfg.fast_execution {
+            return Err(anyhow!(
+                "invoke_cached() called for a config with fast_execution=false"
+            ));
+        }
+
+        let info = self
+            .info
+            .as_ref()
+            .context("call encode_func_config() first (no func info present)")?;
+
+        let key = Self::cache_key(cfg, info);
+
+        let invocable = self
+            .invocable
+            .as_mut()
+            .ok_or_else(|| anyhow!("no invocable ready; call make_instance() first"))?;
+
+        let out = invocable.invoke(input)?;
+
+        let invocable = self.invocable.take().unwrap();
+        self.invocable_cache.put(key, invocable);
+
+        Ok(out)
     }
 
     fn reset(&mut self) -> anyhow::Result<()> {
