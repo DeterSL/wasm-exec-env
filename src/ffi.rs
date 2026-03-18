@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use cxx::CxxString;
 use std::pin::Pin;
-use wasmtime::{Cache, CacheConfig, Config as WasmConfig, Engine as WasmEngine};
+use wasmtime::{Cache, CacheConfig, Config as WasmConfig, Engine as WasmEngine, InstanceAllocationStrategy, PoolingAllocationConfig, Strategy};
 
 use crate::{
     config::{FuncBinaryConfig, FuncBinaryConfigJsonParser, FuncBinaryConfigParser},
@@ -57,6 +57,27 @@ fn new_detersl_engine(cache_capacity: usize) -> Result<Box<DeterSLEngine>> {
     let mut engine_cfg = WasmConfig::new();
     let cache = Cache::new(CacheConfig::new()).context("failed to create Wasmtime cache")?;
     engine_cfg.cache(Some(cache));
+    let mut pool = PoolingAllocationConfig::new();
+    pool.total_memories(128);
+    pool.max_memory_size(256 * 1024 * 1024); // 2 GiB
+    pool.total_tables(128);
+    pool.table_elements(7000);
+    pool.total_core_instances(16 * 16);
+    //pool.linear_memory_keep_resident(1 * 1024 * 1024);
+    //pool.linear_memory_keep_resident(32 * 256 * 1024 * 1024);
+    pool.table_keep_resident(2 * 1024 * 1024);
+    //pool.decommit_batch_size(32);
+    //pool.
+
+    //pool.max_unused_warm_slots(200);
+    
+    engine_cfg.allocation_strategy(InstanceAllocationStrategy::Pooling(pool));
+
+    // Enable copy-on-write heap images.
+     engine_cfg.memory_init_cow(true);
+     //engine_cfg.memory_guard_size(0);
+    //engine_cfg.memory_reservation(0);
+
     let wasmtime_engine =
         WasmEngine::new(&engine_cfg).context("failed to create Wasmtime Engine")?;
 
@@ -81,10 +102,17 @@ fn new_executioner(engine: &DeterSLEngine, kv: Box<KvBox>) -> Result<Box<FfiExec
 
 impl FfiExecutioner {
     fn executioner_run_cfg(&mut self, cfg: &FuncBinaryConfig) -> Result<String> {
-        let output = self
-            .executioner
-            .run_func_with_config(cfg.clone())
-            .context("invoke failed")?;
+        let output = match self
+        .executioner
+        .run_func_with_config(cfg.clone())
+        .context("invoke failed")
+    {
+        Ok(out) => out,
+        Err(err) => {
+            eprintln!("executioner_run_cfg failed:\n{:#}", err);
+            return Err(err);
+        }
+    };
         output.to_json()
     }
 

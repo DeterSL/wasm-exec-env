@@ -35,7 +35,15 @@ impl DeterSLExecutioner {
         invocable_builder.compile_func(&mut self.engine)?;
         invocable_builder.make_instance(&mut self.engine)?;
         let invocable = invocable_builder.build()?;
-        invocable.invoke(config.func_input_event.into())
+        //invocable.invoke(config.func_input_event.into())
+        match invocable.invoke(config.func_input_event.into()) {
+        Ok(out) => Ok(out),
+        Err(err) => {
+            // prints the entire error chain (contexts) nicely
+            eprintln!("invocable.invoke failed:\n{:#}", err);
+            Err(err)
+        }
+    }
     }
     
     #[allow(dead_code)] // This funciton is used in ffi

@@ -9,7 +9,7 @@ noop-logger = []
 noop-filter = []
 
 [dependencies]
-wasmtime = { git = "https://github.com/DeterSL/wasmtime.git", branch = "release-35.0.0-detersl", features = ["cache"] }
+wasmtime = { git = "https://github.com/DeterSL/wasmtime.git", branch = "release-35.0.0-detersl", features = ["cache", "pooling-allocator"] }
 wasmtime-wasi = { git = "https://github.com/DeterSL/wasmtime.git", branch = "release-35.0.0-detersl" }
 anyhow = "1.0"
 hex = "0.4"
