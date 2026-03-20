@@ -1,12 +1,9 @@
 use anyhow::anyhow;
 use wasmtime::Store;
 
-use crate::core::{
-    bindings,
-    engine::detersl_engine::DeterSLEngine,
-    execution::ExecutionState,
-    types,
-};
+use crate::{config::{FuncExecutionPolicy, FuncInitValue}, core::{
+    bindings, detersl_wasi::kv::KVType, engine::detersl_engine::DeterSLEngine, execution::ExecutionState, types
+}};
 
 pub struct DeterSLFuncInvocable {
     pub instance: Option<bindings::DeterslApi>,
@@ -43,6 +40,24 @@ impl DeterSLFuncInvocable {
             }
             None => Err(anyhow!("there isnt any store")),
         }
+    }
+
+    pub fn reset_store(
+        &mut self,
+        kv: Box<dyn KVType>,
+        execution_policy: &FuncExecutionPolicy,
+        initial_values: &FuncInitValue,
+    ) -> anyhow::Result<()> {
+        let store = self
+            .store
+            .as_mut()
+            .ok_or_else(|| anyhow!("there isnt any store"))?;
+
+        store
+            .data_mut()
+            .reset_with_kv(kv, execution_policy, initial_values);
+
+        Ok(())
     }
 
     pub fn invoke(&mut self, input: types::Event) -> anyhow::Result<types::Output> {

@@ -143,9 +143,23 @@ impl DeterSLFuncInvocableBuilder for DefaultFuncInvocableBuilder {
 
             let key = Self::cache_key(cfg, info);
 
-            if let Some(cached) = self.invocable_cache.pop(&key) {
-                self.invocable = Some(cached);
-                return Ok(());
+            if let Some(mut cached) = self.invocable_cache.pop(&key) {
+                let kv = self.kv.as_mut().cloned().context("failed to get kv")?;
+
+                match cached.reset_store(
+                    kv,
+                    &cfg.func_execution_policy,
+                    &cfg.func_initial_values,
+                ) {
+                    Ok(()) => {
+                        self.invocable = Some(cached);
+                        return Ok(());
+                    }
+                    Err(err) => {
+                        eprintln!("cached invocable reset failed:\n{:#}", err);
+                        // fall through and rebuild a fresh store+instance
+                    }
+                }
             }
         }
 
