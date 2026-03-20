@@ -70,7 +70,12 @@ impl DeterSLExecutioner {
             .as_mut()
             .expect("invocable builder must be set (call with_kv first)");
         invocable_builder.encode_func_config(&config);
-        invocable_builder.compile_func(&mut self.engine)?;
-        Ok(())
+        match invocable_builder.compile_func(&mut self.engine) {
+            Ok(_) => Ok(()),
+            Err(err) => {
+                eprintln!("compile failed:\n{:#}", err);
+                Err(err)
+            }
+        }
     }
 }
