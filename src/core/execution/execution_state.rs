@@ -1,3 +1,4 @@
+use log::warn;
 use wasmtime::EventHandler;
 use wasmtime_wasi::{
     p2::{WasiCtx, IoView, WasiView, WasiCtxBuilder, event_handler::EventHandlerImpl},
@@ -66,7 +67,16 @@ impl ExecutionState {
         initial_values: &FuncInitValue,
     ) {
         self.ctx = Self::build_wasi_ctx(execution_policy, initial_values);
+
+        // The language runtime might place some resource on the resource table
+        if !self.table.is_empty() {
+            warn!("Resource table is not empty upon reseting the execution state!")
+        }
+        
         self.table = ResourceTable::new();
+
+        // TODO: is it safe to replace the http ctx?
+        // We need to answer this when we have outbox.
         self.http_ctx = DeterSLHttpCtx::new();
         // keep existing kv as-is
     }
