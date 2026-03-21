@@ -1,4 +1,4 @@
-use std::{num::NonZeroUsize};
+use std::{collections::HashMap, num::NonZeroUsize};
 
 use anyhow::{anyhow, Context};
 use lru::LruCache;
@@ -37,7 +37,7 @@ pub trait DeterSLFuncInvocableBuilder {
 pub struct DefaultFuncInvocableBuilder {
     cfg: Option<FuncBinaryConfig>,
     info: Option<DeterSLFuncInfo>,
-    pre: Option<bindings::DeterslApiPre<ExecutionState>>,
+    pre_map: HashMap<String, bindings::DeterslApiPre<ExecutionState>>,
     invocable: Option<DeterSLFuncInvocable>,
     make_state: Option<
         Box<dyn Fn(&FuncBinaryConfig, Box<dyn KVType>) -> anyhow::Result<ExecutionState> + 'static>,
@@ -51,7 +51,7 @@ impl DefaultFuncInvocableBuilder {
         Self {
             cfg: None,
             info: None,
-            pre: None,
+            pre_map: HashMap::new(),
             invocable: None,
             make_state: None,
             kv: None,
@@ -74,17 +74,10 @@ impl DefaultFuncInvocableBuilder {
         self
     }
 
-    fn cache_key(cfg: &FuncBinaryConfig, _info: &DeterSLFuncInfo) -> String {
-        // If you have a real config hash in another branch, use that here instead.
-        // Using only func_binary_hash is safe only if fast_execution is enabled
-        // for configs that differ only by input.
-        cfg.func_binary_hash.clone()
-    }
-
     pub fn clear(&mut self) {
         self.cfg = None;
         self.info = None;
-        self.pre = None;
+        self.pre_map = HashMap::new();
         self.invocable = None;
     }
 
@@ -121,11 +114,14 @@ impl DeterSLFuncInvocableBuilder for DefaultFuncInvocableBuilder {
             .as_ref()
             .context("call encode_func_config() first (no func info present)")?;
 
-        let pre = engine
-            .get_instance_from(info)
-            .context("failed to get pre-instantiated binding from engine")?;
+        let encoded_func_info = info.encode_func_info();
+        if !self.pre_map.contains_key(&encoded_func_info) {
+            let pre = engine
+                .get_instance_from(info)
+                .context("failed to get pre-instantiated binding from engine")?;
+            self.pre_map.insert(encoded_func_info, pre);
+        }
 
-        self.pre = Some(pre);
         Ok(())
     }
 
@@ -134,16 +130,13 @@ impl DeterSLFuncInvocableBuilder for DefaultFuncInvocableBuilder {
             .cfg
             .as_ref()
             .context("call encode_func_config() first (no config present)")?;
+        let info = self
+            .info
+            .as_ref()
+            .context("call encode_func_config() first (no func info present)")?;
 
         if cfg.fast_execution {
-            let info = self
-                .info
-                .as_ref()
-                .context("call encode_func_config() first (no func info present)")?;
-
-            let key = Self::cache_key(cfg, info);
-
-            if let Some(mut cached) = self.invocable_cache.pop(&key) {
+            if let Some(mut cached) = self.invocable_cache.pop(&info.encode_func_info()) {
                 let kv = self.kv.as_mut().cloned().context("failed to get kv")?;
 
                 match cached.reset_store(
@@ -164,10 +157,10 @@ impl DeterSLFuncInvocableBuilder for DefaultFuncInvocableBuilder {
         }
 
         let pre = self
-            .pre
-            .as_ref()
-            .cloned()
-            .context("call compile_func() first (no pre-instance present)")?;
+            .pre_map
+            .get(&info.encode_func_info())
+            .context("call compile_func() first (no pre-instance present)")?
+            .clone();
 
         let make_state = self
             .make_state
@@ -202,18 +195,18 @@ impl DeterSLFuncInvocableBuilder for DefaultFuncInvocableBuilder {
             .as_ref()
             .context("call encode_func_config() first (no config present)")?;
 
+        let info = self
+            .info
+            .as_ref()
+            .context("call encode_func_config() first (no func info present)")?;
+
         if !cfg.fast_execution {
             return Err(anyhow!(
                 "invoke_cached() called for a config with fast_execution=false"
             ));
         }
 
-        let info = self
-            .info
-            .as_ref()
-            .context("call encode_func_config() first (no func info present)")?;
-
-        let key = Self::cache_key(cfg, info);
+        let key = info.encode_func_info();
 
         let invocable = self
             .invocable

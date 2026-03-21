@@ -56,6 +56,11 @@ impl DeterSLFuncInfo {
     pub fn fetch(&self) -> anyhow::Result<PathBuf> {
         (self.func_fetcher)()
     }
+
+    // Encode the func info and generate a unique id base on the function info
+    pub fn encode_func_info(&self) -> String {
+        return self.func_hash.clone()
+    }
 }
 
 /// Wrapper around the Wasmtime engine and cache for managing compiled components
@@ -133,7 +138,8 @@ impl DeterSLEngine {
         &mut self,
         detersl_func: &DeterSLFuncInfo,
     ) -> anyhow::Result<bindings::DeterslApiPre<ExecutionState>> {
-        match self.instance_cache.get(&detersl_func.func_hash) {
+        let encoded_func_info = detersl_func.encode_func_info();
+        match self.instance_cache.get(&encoded_func_info) {
             Some(instance) => Ok(instance.clone()), // Cache hit
             None => {
                 let instance = self
