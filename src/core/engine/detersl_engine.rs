@@ -1,4 +1,4 @@
-use std::{path::PathBuf, sync::Arc, sync::OnceLock};
+use std::{sync::Arc, sync::OnceLock};
 
 use anyhow::Context;
 use moka::sync::Cache; // Import synchronous Moka cache
@@ -10,14 +10,9 @@ use wasmtime::{
 use wasmtime_wasi::p2::add_to_linker_sync;
 
 use crate::{
-    config::FuncBinaryConfig,
+    config::{engine::global_engine_config::require_global_engine_config},
     core::{
-        bindings,
-        detersl_linker::{AddKVToLinker, LinkerOption},
-        detersl_wasi::http,
-        engine::config::DeterSLEngineConfig,
-        execution::ExecutionState,
-        fetcher::{get_one_time_component_fetcher_for_source, OneTimeFetcherFn},
+        bindings, detersl_linker::{AddKVToLinker, LinkerOption}, detersl_wasi::http, engine::func_info::DeterSLFuncInfo, execution::ExecutionState
     },
 };
 
@@ -35,65 +30,31 @@ static GLOBAL_SHARED_CACHE: Lazy<Arc<Cache<String, bindings::DeterslApiPre<Execu
         Arc::new(Cache::builder().max_capacity(capacity).build())
     });
 
-/// Function metadata for fetching and managing compilation
-pub struct DeterSLFuncInfo {
-    pub func_hash: String,
-    pub func_fetcher: OneTimeFetcherFn,
-}
-
-impl DeterSLFuncInfo {
-    /// Create function metadata from a configuration.
-    pub fn from_config(config: FuncBinaryConfig) -> anyhow::Result<Self> {
-        let component_fetcher =
-            get_one_time_component_fetcher_for_source(&config.func_binary_source)?;
-        Ok(Self {
-            func_hash: config.func_binary_hash,
-            func_fetcher: component_fetcher,
-        })
-    }
-
-    /// Fetch a Wasm component for this function.
-    pub fn fetch(&self) -> anyhow::Result<PathBuf> {
-        (self.func_fetcher)()
-    }
-
-    // Encode the func info and generate a unique id base on the function info
-    pub fn encode_func_info(&self) -> String {
-        return self.func_hash.clone()
-    }
-}
-
 /// Wrapper around the Wasmtime engine and cache for managing compiled components
 pub struct DeterSLEngine {
     pub engine: Engine,
     pub instance_cache: Arc<Cache<String, bindings::DeterslApiPre<ExecutionState>>>, // Shared Cache
     default_linker: Linker<ExecutionState>,
-    config: DeterSLEngineConfig,
 }
 
 impl DeterSLEngine {
-    /// Initializes the global cache capacity if this is the first engine being created.
-    fn initialize_cache_capacity(config: &DeterSLEngineConfig) {
-        CACHE_CAPACITY
-            .set(config.lrucache_capacity as u64)
-            .ok(); // Ignore if already set
-    }
-
     /// Create a new engine. Initializes the cache on the first instantiation.
-    pub fn new(engine: Engine, config: DeterSLEngineConfig) -> anyhow::Result<Self> {
-        // Initialize the cache capacity during the first engine's creation.
-        Self::initialize_cache_capacity(&config);
-
+    pub fn new(engine: Engine) -> anyhow::Result<Self> {
         let mut linker = Linker::new(&engine);
         add_to_linker_sync(&mut linker)?; // Adds WASI linker
         http::add_only_http_to_linker_async(&mut linker)?;
         let mut kv_linker = AddKVToLinker::new();
         kv_linker.apply_to_linker(&mut linker)?;
 
+        let cfg = require_global_engine_config();
+
+        CACHE_CAPACITY
+            .set(cfg.lrucache_capacity as u64)
+            .ok(); // Ignore if already set
+
         Ok(Self {
             engine,
             default_linker: linker,
-            config,
             instance_cache: GLOBAL_SHARED_CACHE.clone(), // Reference the global cache
         })
     }
@@ -156,7 +117,6 @@ impl Clone for DeterSLEngine {
     fn clone(&self) -> Self {
         Self {
             engine: self.engine.clone(),
-            config: self.config.clone(),
             default_linker: self.default_linker.clone(),
             instance_cache: Arc::clone(&self.instance_cache), // Cache is shared
         }

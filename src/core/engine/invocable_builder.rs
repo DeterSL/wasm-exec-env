@@ -9,8 +9,7 @@ use crate::{
         bindings,
         detersl_wasi::kv::KVType,
         engine::{
-            detersl_engine::{DeterSLEngine, DeterSLFuncInfo},
-            invocable::DeterSLFuncInvocable,
+            detersl_engine::DeterSLEngine, func_info::DeterSLFuncInfo, invocable::DeterSLFuncInvocable
         },
         execution::ExecutionState,
         types,

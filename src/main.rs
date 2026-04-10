@@ -13,10 +13,15 @@ use hyper::{body::Incoming, Method, Request, Response, StatusCode};
 use hyper_util::rt::TokioIo;
 use tokio::sync::{mpsc, oneshot};
 
-use wasmtime::{Cache, CacheConfig, Config, Engine};
-
-use crate::core::engine::{DeterSLEngine, DeterSLEngineConfig};
+use crate::core::engine::DeterSLEngine;
 use crate::core::worker::Worker;
+
+// NEW:
+use crate::config::engine::engine_config::EngineConfig;
+use crate::config::engine::global_engine_config::{
+    init_global_engine_config,
+    require_global_engine_config,
+};
 
 type RespBody = http_body_util::combinators::BoxBody<Bytes, Infallible>;
 
@@ -74,23 +79,22 @@ async fn handle_request(
 async fn main() -> anyhow::Result<()> {
     env_logger::init();
 
+    // Initialize global engine config with defaults
+    init_global_engine_config(EngineConfig::default())?;
+
     let (tx_router, rx_router) = mpsc::channel::<FuncJob>(1024);
 
     let num_workers = std::thread::available_parallelism()
         .map(|n| n.get())
         .unwrap_or(1);
-    // num_workers = 1;
+
     log::info!("spawning {} workers", num_workers);
 
     let mut worker_senders: Vec<mpsc::Sender<FuncJob>> = Vec::with_capacity(num_workers);
-    let mut engine_cfg = Config::new();
-    let cache = Cache::new(CacheConfig::new()).expect("cache");
-    engine_cfg.cache(Some(cache));
-    let engine = Engine::new(&engine_cfg)?;
 
-    let detersl_engine_config = DeterSLEngineConfig::default();
-    let detersl_engine = DeterSLEngine::new(engine, detersl_engine_config)?;
-    
+    // Build engine from the global config
+    let detersl_engine: DeterSLEngine = require_global_engine_config().build_detersl_engine()?;
+
     for i in 0..num_workers {
         let (tx_w, rx_w) = mpsc::channel::<FuncJob>(1);
 
@@ -98,7 +102,6 @@ async fn main() -> anyhow::Result<()> {
         std::thread::Builder::new()
             .name(format!("worker-{i}"))
             .spawn(move || {
-                
                 let mut worker = Worker::from_parts(detersl_engine_clone);
                 worker.run_forever(rx_w);
             })
@@ -152,7 +155,7 @@ async fn route_jobs(
 
     let mut next_idx: usize = 0;
 
-    'route : while let Some(mut job) = rx_router.recv().await {
+    'route: while let Some(mut job) = rx_router.recv().await {
         let n = workers.len();
         let mut i = 0;
         while i < n {

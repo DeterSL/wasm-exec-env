@@ -8,7 +8,7 @@ use crate::{
     core::{
         bindings,
         detersl_wasi::kv::{DummyKV, KVType, KVTypeClone, KvBox},
-        engine::{DeterSLEngine, DeterSLEngineConfig},
+        engine::{DeterSLEngine},
         executioner::DeterSLExecutioner,
     },
 };
@@ -23,7 +23,10 @@ mod ffi {
         type FfiExecutioner;
 
         fn func_config_from_json(json: &CxxString) -> Result<Box<FuncBinaryConfig>>;
-        fn new_detersl_engine(config_path: &CxxString) -> Result<Box<DeterSLEngine>>;
+
+        fn new_detersl_engine_from_file(config_path: &CxxString) -> Result<Box<DeterSLEngine>>;
+        fn new_detersl_engine_from_json(config_json: &CxxString) -> Result<Box<DeterSLEngine>>;
+
         fn new_executioner(engine: &DeterSLEngine, kv: Box<KvBox>) -> Result<Box<FfiExecutioner>>;
         fn executioner_run_cfg(self: &mut FfiExecutioner, cfg: &FuncBinaryConfig) -> Result<String>;
         fn executioner_run_json(self: &mut FfiExecutioner, json: &CxxString) -> Result<String>;
@@ -53,8 +56,17 @@ fn func_config_from_json(json: &CxxString) -> Result<Box<FuncBinaryConfig>> {
     Ok(Box::new(cfg))
 }
 
-fn new_detersl_engine(config_path: &CxxString) -> Result<Box<DeterSLEngine>> {
-    let engine = config::engine::engine_config::new_detersl_engine_from_config_path(config_path.to_str()?)?;
+fn new_detersl_engine_from_file(config_path: &CxxString) -> Result<Box<DeterSLEngine>> {
+    let engine = config::engine::engine_config::new_detersl_engine_from_config_path(
+        config_path.to_str()?,
+    )?;
+    Ok(Box::new(engine))
+}
+
+fn new_detersl_engine_from_json(config_json: &CxxString) -> Result<Box<DeterSLEngine>> {
+    let engine = config::engine::engine_config::new_detersl_engine_from_json(
+        config_json.to_str()?,
+    )?;
     Ok(Box::new(engine))
 }
 

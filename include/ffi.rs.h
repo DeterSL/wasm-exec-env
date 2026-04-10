@@ -1027,7 +1027,9 @@ private:
 
 ::rust::Box<::FuncBinaryConfig> func_config_from_json(::std::string const &json);
 
-::rust::Box<::DeterSLEngine> new_detersl_engine(::std::string const &config_path);
+::rust::Box<::DeterSLEngine> new_detersl_engine_from_file(::std::string const &config_path);
+
+::rust::Box<::DeterSLEngine> new_detersl_engine_from_json(::std::string const &config_json);
 
 ::rust::Box<::FfiExecutioner> new_executioner(::DeterSLEngine const &engine, ::rust::Box<::KvBox> kv);
 

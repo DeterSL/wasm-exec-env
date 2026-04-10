@@ -3,7 +3,7 @@ use std::time::Instant;
 use tokio::sync::{mpsc, oneshot};
 use wasmtime::Config;
 
-use crate::{config::FuncBinaryConfig, core::{detersl_wasi::kv::{DummyKV, KVType}, engine::{DeterSLEngine, DeterSLEngineConfig}, executioner::DeterSLExecutioner, types}};
+use crate::{config::FuncBinaryConfig, core::{detersl_wasi::kv::{DummyKV, KVType}, engine::DeterSLEngine, executioner::DeterSLExecutioner, types}};
 
 // Keep your error alias
 type WorkerError = anyhow::Error;
@@ -22,9 +22,9 @@ impl Worker {
     // Build a worker with a fresh DeterSLEngine and a default DummyKV backend.
     // You can add overloads to inject a custom KV or custom engine if needed.
     #[allow(dead_code)]
-    pub fn new(engine_config: Config, detersl_engine_config: DeterSLEngineConfig) -> Self {
+    pub fn new(engine_config: Config) -> Self {
         let engine = wasmtime::Engine::new(&engine_config).expect("engine");
-        let detersl_engine = DeterSLEngine::new(engine, detersl_engine_config).expect("couldnt made the engine");
+        let detersl_engine = DeterSLEngine::new(engine).expect("couldnt made the engine");
 
         // Build an executioner and inject a KV backend.
         let mut exec = DeterSLExecutioner::new(detersl_engine);
